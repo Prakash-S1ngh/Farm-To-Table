@@ -1,0 +1,121 @@
+/* General Layout */
+.profile-container {
+    display: flex;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Sidebar Styling */
+.profile-sidebar {
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    height: 100vh;
+    position: sticky;
+    top: 0;
+}
+
+.profile-nav-content {
+    padding: 20px;
+    width: 100%;
+}
+
+.profile-nav-content h2 {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.profile-nav-content ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.profile-nav-content li {
+    margin-bottom: 15px;
+}
+
+.profile-nav-content a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.profile-nav-content a:hover,
+.profile-nav-content a.active {
+    background-color: #e6e6e6;
+    color: #4CAF50;
+}
+
+.profile-nav-content .nav-icon {
+    margin-right: 10px;
+    font-size: 1.2rem;
+    color: #555;
+    transition: color 0.3s;
+}
+
+.profile-nav-content a:hover .nav-icon {
+    color: #4CAF50;
+}
+
+/* Main Content Styling */
+.profile-main-content {
+    flex: 1;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.order-history {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.order-card {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.order-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.order-card p {
+    margin: 5px 0;
+    color: #555;
+}
+
+.order-details {
+    margin-top: 10px;
+}
+
+.order-details h4 {
+    font-size: 1rem;
+    margin-bottom: 5px;
+    color: #4CAF50;
+}
+
+.order-detail-item {
+    border-top: 1px solid #ddd;
+    padding-top: 5px;
+    margin-top: 5px;
+    color: #555;
+}

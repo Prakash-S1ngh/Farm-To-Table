@@ -1,0 +1,88 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #f3f3f3, #e6e6e6);
+  }
+  
+  .card {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15), 0 6px 6px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+    transform: perspective(1000px) rotateX(5deg) rotateY(-5deg);
+    transition: transform 0.5s ease;
+  }
+  
+  .card:hover {
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+  }
+  
+  .heading {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .inputGroup {
+    margin-bottom: 20px;
+  }
+  
+  .label {
+    font-size: 1rem;
+    color: #555;
+    font-family: 'Roboto', sans-serif;
+    margin-bottom: 8px;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    transition: border-color 0.3s;
+  }
+  
+  .input:focus {
+    border-color: #00b894;
+    outline: none;
+  }
+  
+  .button {
+    padding: 12px 20px;
+    background-color: #00b894;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .button:hover {
+    background-color: #019872;
+  }
+  
+  .message {
+    margin-top: 20px;
+    font-size: 1rem;
+    text-align: center;
+    color: #333;
+    font-family: 'Roboto', sans-serif;
+  }
+  
