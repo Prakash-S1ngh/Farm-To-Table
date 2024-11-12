@@ -45,11 +45,11 @@ const Home = () => {
         <h2>What Our Clients Say</h2>
         <div className="testimonials">
           <Testimonial text="Great service!" author="Mansi Birla" rating={4} />
-          <Testimonial text="Amazing experience!" author="Priya Sharma" rating={5} />
+          {/* <Testimonial text="Amazing experience!" author="Priya Sharma" rating={5} />
           <Testimonial text="Would definitely recommend!" author="Debanshu Goel" rating={4} />
           <Testimonial text="Not bad, but could be better." author="Shruti Gupta" rating={3} />
           <Testimonial text="Excellent customer support!" author="Akash Tiwari" rating={5} />
-          <Testimonial text="Good value for money." author="Priya Tripathi" rating={4} />
+          <Testimonial text="Good value for money." author="Priya Tripathi" rating={4} /> */}
         </div>
       </div>
       <section className="team">

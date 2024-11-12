@@ -28,6 +28,7 @@ const SignupForm = () => {
 
   const handleUserChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    
   };
 
   const handleFarmerChange = (e) => {
@@ -56,6 +57,10 @@ const SignupForm = () => {
       for (const key in data) {
         formDataToSubmit.append(key, data[key]);
       }
+
+      console.log("data of farmer ",farmerData);
+      console.log(isUserSignup);
+      
 
       const res = await axios.post(url, formDataToSubmit, {
         withCredentials: true,

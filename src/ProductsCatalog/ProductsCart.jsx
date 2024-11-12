@@ -4,19 +4,31 @@ import Header from '../components/Header';
 import UserContext from '../Users/Context/UserContext';
 import { useNavigate } from 'react-router-dom';
 import ProductContext from './ProductContext';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { AiOutlineHeart } from 'react-icons/ai'; // Import heart icon
 
 const ProductsCart = () => {
   const navigate = useNavigate();
-  const { isUser } = useContext(UserContext); 
+  const { isUser } = useContext(UserContext);
   const {
     products,
     loading,
     error,
-    addToCart // Use ProductContext for product and cart management
+    addToCart,
+    addToWishlist // Use ProductContext for wishlist management
   } = useContext(ProductContext);
 
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('CAT0');
+  
+  const addCart = (product) => {
+    toast.success(`${product.name} added to cart!`);
+  };
+
+  const addWishlist = (product) => {
+    toast.info(`${product.name} added to wishlist!`);
+  };
 
   // Handle redirection if the user is not logged in
   const cartHandler = (product) => {
@@ -24,6 +36,16 @@ const ProductsCart = () => {
       navigate('/login');
     } else {
       addToCart(product); // Add product to the cart using ProductContext
+      toast.success('Product added to cart successfully!');
+    }
+  };
+
+  const wishlistHandler = (product) => {
+    if (!isUser) {
+      navigate('/login');
+    } else {
+      addToWishlist(product); // Add product to the wishlist using ProductContext
+      toast.success('Product added to wishlist successfully!');
     }
   };
 
@@ -61,6 +83,18 @@ const ProductsCart = () => {
   return (
     <div>
       <Header />
+      <ToastContainer
+  position="top-center" // This will position the toast notifications at the top center of the page
+  autoClose={3000} // Optional: Duration for the toast to auto-close (in milliseconds)
+  hideProgressBar={false} // Optional: Show or hide the progress bar
+  newestOnTop={true} // Optional: Show newest toast notifications on top
+  closeOnClick // Optional: Close the toast when clicked
+  rtl={false} // Optional: Right-to-left text direction
+  pauseOnFocusLoss // Optional: Pause the timer when the window loses focus
+  draggable // Optional: Allow drag and dismiss
+  pauseOnHover // Optional: Pause the timer when hovered
+/>
+
       <div className="product-container">
         <aside className="filters-sidebar">
           <div className="category-section">
@@ -147,7 +181,20 @@ const ProductsCart = () => {
                 <img src={product.prodImage} alt={product.name} />
                 <h3>{product.name}</h3>
                 <p>Price: Rs {product.price}</p>
-                <button onClick={() => cartHandler(product)}>Add to Cart</button>
+                <div className="product-actions">
+                  <button
+                    className="product-action-btn"
+                    onClick={() => cartHandler(product)}
+                  >
+                    Add to Cart
+                  </button>
+                  <button
+                    className="product-action-btn"
+                    onClick={() => wishlistHandler(product)}
+                  >
+                    <AiOutlineHeart size={20} /> Wishlist
+                  </button>
+                </div>
               </div>
             ))
           ) : (

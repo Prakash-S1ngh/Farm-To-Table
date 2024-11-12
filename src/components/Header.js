@@ -30,7 +30,10 @@ const Header = () => {
           <li><Link to='/'>Home</Link></li>
           <li><Link to='/Shop'>Shop</Link></li>
           <li>Category</li>
-          <li>Testimonials</li>
+          <Link to='/Testimonials'>
+            <li>Testimonials</li>
+          </Link>
+      
           <li><Link to='/about-us'>About Us</Link></li>
           <li>Contact Us</li>
         </ul>
@@ -54,7 +57,10 @@ const Header = () => {
           ) : (
             // User-specific navigation
             <div className="user-icons">
-              <Heart className="icon" />
+              <Link to='/Wishlist'> 
+                <Heart className="icon" />
+              </Link>
+              
               <Link to='/Cart'>
               <ShoppingCart className="icon" />
               </Link>

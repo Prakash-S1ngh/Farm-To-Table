@@ -17,6 +17,8 @@ import Cart from './Carts/Cart.jsx';
 import { ProductProvider } from './ProductsCatalog/ProductContext.js';
 import Payment from './Payment/Payment.jsx';
 import OrderHistory from './Users/OrderHistory.jsx';
+import Testimonials from './components/Testimonials.js';
+import Wishlist from './Carts/Whishlist.jsx';
 // import ProductdCard from './components/ProductCard.js';
 
 const App = () => {
@@ -39,6 +41,8 @@ const App = () => {
           <Route path="/Payment" element={<Payment />} />
           <Route path="/Payment" element={<Payment />} />
           <Route path="/ordersHistory" element={<OrderHistory/>} />
+          <Route path="/Testimonials" element={<Testimonials/>} />
+          <Route path="/Wishlist" element={<Wishlist/>} />
 
 
 

@@ -37,11 +37,11 @@ const OrderHistory = () => {
         <div className="profile-nav-content">
           <h2>Navigation</h2>
           <ul>
-            <li><a href="#"><span className="nav-icon">📊</span> Dashboard</a></li>
+          <li><Link to='/UserProfile'> <span className="nav-icon">📊</span> Dashboard</Link></li>
             {!isFarmer && (
               <>
                <li><Link to='/ordersHistory'><span className="nav-icon">📜</span>Order History</Link></li>
-                <li><a href="#"><span className="nav-icon">❤️</span> Wishlist</a></li>
+               <li><Link to='/Wishlist'><span className="nav-icon">❤️</span> Wishlist</Link></li>
                 <li><Link to='/Cart'><span className="nav-icon">🛒</span> Shopping Cart</Link></li>
               </>
             )}

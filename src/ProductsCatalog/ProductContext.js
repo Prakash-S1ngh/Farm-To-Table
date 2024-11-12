@@ -1,4 +1,3 @@
-// src/context/ProductContext.js
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -8,6 +7,7 @@ export const ProductContext = createContext();
 export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -28,19 +28,15 @@ export const ProductProvider = ({ children }) => {
     fetchProducts();
   }, []);
 
-  // Add product to the cart
+  // Cart functionality
   const addToCart = (product) => {
     setCartItems((prevItems) => [...prevItems, { ...product, quantity: 1 }]);
   };
 
-  // Remove product from the cart
-  
   const removeFromCart = (id) => {
     setCartItems((prevItems) => prevItems.filter((item) => item.product_id !== id));
   };
-  
 
-  // Increment quantity with stock restriction
   const incrementQuantity = (id) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
@@ -50,7 +46,7 @@ export const ProductProvider = ({ children }) => {
       )
     );
   };
-  
+
   const decrementQuantity = (id) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
@@ -60,17 +56,34 @@ export const ProductProvider = ({ children }) => {
       )
     );
   };
-  
+
+  // Wishlist functionality
+  const addToWishlist = (product) => {
+    setWishlist((prevWishlist) => {
+      // Check if the product is already in the wishlist
+      if (prevWishlist.find((item) => item.product_id === product.product_id)) {
+        return prevWishlist; // Product already in wishlist, no need to add
+      }
+      return [...prevWishlist, product];
+    });
+  };
+
+  const removeFromWishlist = (id) => {
+    setWishlist((prevWishlist) => prevWishlist.filter((item) => item.product_id !== id));
+  };
 
   return (
     <ProductContext.Provider
       value={{
         products,
         cartItems,
+        wishlist,
         addToCart,
         removeFromCart,
         incrementQuantity,
         decrementQuantity,
+        addToWishlist,
+        removeFromWishlist,
         loading,
         error,
       }}

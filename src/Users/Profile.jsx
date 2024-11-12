@@ -4,11 +4,10 @@ import './Profile.css';
 import userProfileImage from './images/UserPro.jpg';
 import UserContext from './Context/UserContext';
 import { Link } from 'react-router-dom';
-// import farmerProfileImage from './images/FarmerPro.jpg'; // Add an image for the farmer's profile
 
 const Profile = () => {
   const [userData, setUserData] = useState(null);
-  const { isFarmer , isUser , setUser , setFarmer ,loggedin, setLoggedin } = useContext(UserContext);
+  const { isFarmer, isUser, setUser, setFarmer, loggedin, setLoggedin } = useContext(UserContext);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -18,40 +17,42 @@ const Profile = () => {
     city: '',
     postalCode: '',
     country: '',
-    profileImage:''
+    profileImage: ''
   });
   const [loading, setLoading] = useState(true);
-  const logoutHandler = ()=>{
-    if(isUser){
+
+  const logoutHandler = () => {
+    if (isUser) {
       setLoggedin(false);
       setUser(false);
     }
-    if(isFarmer){
+    if (isFarmer) {
       setLoggedin(false);
       setFarmer(false);
     }
-  }
+  };
 
-  // Function to fetch user data from API
+  // Fetch user data from API
   const fetchUserData = async () => {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:4000/users/api/v2/GetUser', {
-        withCredentials: true, // Include credentials in the request
+        withCredentials: true,
       });
-      console.log("this is user section ");
       setUserData(response.data.user);
+
+      const { first_name, last_name, email, phone, profile_image, address } = response.data.user;
       setFormData({
-        firstName: response.data.user.first_name || '',
-        lastName: response.data.user.last_name || '',
-        email: response.data.user.email || '',
-        phone: response.data.user.phone || '',
-        street: response.data.user.street || '',
-        city: response.data.user.city || '',
-        postalCode: response.data.user.postal_code || '',
-        country: response.data.user.country || '',
-        state: response.data.user.state || '',
-        profileImage: response.data.user.profile_image || null,
+        firstName: first_name || '',
+        lastName: last_name || '',
+        email: email || '',
+        phone: phone || '',
+        street: address?.street || '',
+        city: address?.city || '',
+        postalCode: address?.postal_code || '',
+        country: address?.country || '',
+        state: address?.state || '',
+        profileImage: profile_image || userProfileImage,
       });
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -60,12 +61,12 @@ const Profile = () => {
     }
   };
 
-  // Function to fetch farmer data from API
+  // Fetch farmer data from API
   const fetchFarmerData = async () => {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:4000/farmers/api/v2/getFarmer', {
-        withCredentials: true, // Include credentials in the request
+        withCredentials: true,
       });
       setUserData(response.data.farmer);
       setFormData({
@@ -78,7 +79,7 @@ const Profile = () => {
         postalCode: response.data.farmer.postal_code || '',
         country: response.data.farmer.country || '',
         state: response.data.farmer.state || '',
-        profileImage: response.data.farmer.profile_image || null,
+        profileImage: response.data.farmer.profileImage || null,
       });
     } catch (error) {
       console.error('Error fetching farmer data:', error);
@@ -89,9 +90,9 @@ const Profile = () => {
 
   useEffect(() => {
     if (isFarmer) {
-      fetchFarmerData(); // Fetch farmer data if isFarmer is true
+      fetchFarmerData();
     } else {
-      fetchUserData(); // Fetch user data otherwise
+      fetchUserData();
     }
   }, []);
 
@@ -102,19 +103,56 @@ const Profile = () => {
 
     try {
       const url = isFarmer
-        ? 'http://localhost:4000/farmers/api/v2/updateFarmer'
+        ? 'http://localhost:4000/farmers/api/v2/farmAddress'
         : 'http://localhost:4000/users/api/v2/updateUser';
 
       await axios.post(url, formData, {
         withCredentials: true,
       });
+
+      // Re-fetch data to re-render
       if (isFarmer) {
-        await fetchFarmerData(); // Re-fetch farmer data after saving changes
+        await fetchFarmerData();
       } else {
-        await fetchUserData(); // Re-fetch user data after saving changes
+        await fetchUserData();
       }
     } catch (error) {
       console.error('Error saving changes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to update the address
+  const updateAddress = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const addressUrl = isFarmer
+        ? 'http://localhost:4000/farmers/api/v2/farmAddress'
+        : 'http://localhost:4000/users/api/v2/updateUser';
+
+
+      // Make the POST request to update the address
+      await axios.post(addressUrl, {
+        street: formData.street,
+        city: formData.city,
+        postal_code: formData.postalCode,
+        country: formData.country,
+        state: formData.state,
+      }, {
+        withCredentials: true,
+      });
+
+      // Re-fetch data to reflect the updated address
+      if (isFarmer) {
+        await fetchFarmerData();
+      } else {
+        await fetchUserData();
+      }
+    } catch (error) {
+      console.error('Error updating address:', error);
     } finally {
       setLoading(false);
     }
@@ -145,21 +183,19 @@ const Profile = () => {
         <div className="profile-nav-content">
           <h2>Navigation</h2>
           <ul>
-            <li><a href="#"><span className="nav-icon">📊</span> Dashboard</a></li>
-            
+            <li><Link to='/UserProfile'> <span className="nav-icon">📊</span> Dashboard</Link></li>
             {!isFarmer && (
               <>
-                <li><Link to='/ordersHistory'><span className="nav-icon">📜</span>Order History</Link></li>
-                <li><a href="#"><span className="nav-icon">❤️</span> Wishlist</a></li>
-                <li><a href="#"><span className="nav-icon">🛒</span> Shopping Cart</a></li>
+                <li><Link to='/ordersHistory'><span className="nav-icon">📜</span> Order History</Link></li>
+                <li><Link to='/Wishlist'><span className="nav-icon">❤️</span> Wishlist</Link></li>
+                <li><Link to='/Cart'><span className="nav-icon">🛒</span> Shopping Cart</Link></li>
               </>
             )}
-            {isFarmer &&(
-              <li><a href="/FarmProducts"><span className="nav-icon">📜</span>Farm Orders</a></li>
+            {isFarmer && (
+              <li><a href="/FarmProducts"><span className="nav-icon">📜</span> Farm Orders</a></li>
             )}
             <li onClick={logoutHandler}><Link to='/'><span className="nav-icon">🚪</span> Log-out</Link></li>
           </ul>
-
         </div>
       </nav>
 
@@ -255,16 +291,6 @@ const Profile = () => {
                 />
               </div>
               <div className="profile-form-group">
-                <label htmlFor="state">State</label>
-                <input
-                  type="text"
-                  id="state"
-                  name="state"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div className="profile-form-group">
                 <label htmlFor="country">Country</label>
                 <input
                   type="text"
@@ -274,9 +300,24 @@ const Profile = () => {
                   onChange={handleInputChange}
                 />
               </div>
+              <div className="profile-form-group">
+                <label htmlFor="state">State</label>
+                <input
+                  type="text"
+                  id="state"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleInputChange}
+                />
+              </div>
             </div>
           </section>
-          <button type="submit" className="profile-btn-save">Save Changes</button>
+
+          <button type="submit" className="profile-submit-button">Save Changes</button>
+        </form>
+
+        <form onSubmit={updateAddress}>
+          <button type="submit" className="profile-update-address-button">Update Address</button>
         </form>
       </main>
     </div>

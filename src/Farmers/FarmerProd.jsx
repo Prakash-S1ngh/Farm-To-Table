@@ -7,12 +7,30 @@ const fetchData = async () => {
         const response = await axios.get('http://localhost:4000/farmers/api/v2/gethistory', {
             withCredentials: true,
         });
-        console.log(typeof(response.data.data));
-        console.log(response.data.data); // Checking the data format
-        return response.data.data;  // Return the actual data (array of products)
+        return response.data.data; 
     } catch (error) {
         console.log("An error occurred while fetching details:", error.message);
-        return [];  // Return an empty array in case of error
+        return [];
+    }
+}
+
+const updateProduct = async (product) => {
+    try {
+        const updatedProduct = {
+            ...product,
+            name: prompt("Enter new name:", product.name) || product.name,
+            description: prompt("Enter new description:", product.description) || product.description,
+            price: parseFloat(prompt("Enter new price:", product.price)) || product.price,
+            quantity: parseInt(prompt("Enter new quantity:", product.quantity)) || product.quantity
+        };
+        
+        await axios.put(`http://localhost:4000/farmers/api/v2/updateproduct`, updatedProduct, {
+            withCredentials: true,
+        });
+        alert("Product updated successfully!");
+    } catch (error) {
+        console.error("Error updating product:", error.message);
+        alert("An error occurred while updating the product.");
     }
 }
 
@@ -22,7 +40,7 @@ const FarmerProd = () => {
     useEffect(() => {
         const getData = async () => {
             const fetchedData = await fetchData();
-            setData(fetchedData);  // Set the fetched data correctly
+            setData(fetchedData);
         };
         getData();
     }, []);
@@ -32,7 +50,7 @@ const FarmerProd = () => {
             <aside className="sidebar">
                 <ul>
                     <li><a href="/UserProfile"><span className="nav-icon">📊</span> Dashboard</a></li>
-                    <li><a href="#"> <span className="nav-icon">📜</span>Farm Orders</a></li>
+                    <li><a href="#"><span className="nav-icon">📜</span> Farm Orders</a></li>
                     <li>Log-out</li>
                 </ul>
             </aside>
@@ -50,6 +68,7 @@ const FarmerProd = () => {
                                 <th>Name</th>
                                 <th>Description</th>
                                 <th>Image</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -70,11 +89,19 @@ const FarmerProd = () => {
                                                 className="prod-image"
                                             />
                                         </td>
+                                        <td>
+                                            <button
+                                                className="update-button"
+                                                onClick={() => updateProduct(product)}
+                                            >
+                                                Update
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="8">No products available</td>
+                                    <td colSpan="9">No products available</td>
                                 </tr>
                             )}
                         </tbody>
