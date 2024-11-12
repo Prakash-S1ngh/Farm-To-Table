@@ -90,6 +90,11 @@
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+}
+
+.order-card:hover {
+    transform: translateY(-5px);
 }
 
 .order-card h3 {
@@ -113,9 +118,56 @@
     color: #4CAF50;
 }
 
+/* Button to toggle Order Details */
+.toggle-details-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s;
+}
+
+.toggle-details-btn:hover {
+    background-color: #45a049;
+}
+
+/* Table Styling for Order Details */
+.order-details-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    display: none; /* Hidden by default */
+}
+
+.order-details-table th, .order-details-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+.order-details-table th {
+    background-color: #f2f2f2;
+    color: #333;
+}
+
+.order-details-table td img {
+    width: 50px;
+    height: auto;
+    object-fit: cover;
+}
+
+/* Show table when expanded */
+.show-details .order-details-table {
+    display: table;
+}
+
 .order-detail-item {
     border-top: 1px solid #ddd;
     padding-top: 5px;
     margin-top: 5px;
     color: #555;
 }
+

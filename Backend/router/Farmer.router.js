@@ -1,5 +1,5 @@
 const express  = require('express');
-const { createFarmer, loginFarmer, AddressforFarmer,  addproducts, getFarmer, getallproduct, getFarmerhistory, updateProduct } = require('../controller/Farmer.controller');
+const { createFarmer, loginFarmer, AddressforFarmer,  addproducts, getFarmer, getallproduct, getFarmerhistory, updateProduct, deleteProduct } = require('../controller/Farmer.controller');
 const { FarmerAuth } = require('../middleware/FarmerAuthorization.middleware');
 const upload = require('../config/multer.config');
 const farmrouter = express.Router();
@@ -12,7 +12,9 @@ farmrouter.post('/farmAddress',FarmerAuth,AddressforFarmer);
 farmrouter.post('/addProducts',upload.single('image'),FarmerAuth,addproducts);
 farmrouter.get('/getAllproducts' , getallproduct);
 farmrouter.get('/gethistory' , FarmerAuth , getFarmerhistory);
-farmrouter.get('/updateProduct' , FarmerAuth , updateProduct);
+farmrouter.put('/updateProduct' , FarmerAuth , updateProduct);
+farmrouter.delete('/deleteProduct/:product_id', FarmerAuth, deleteProduct);
+
 
 
 

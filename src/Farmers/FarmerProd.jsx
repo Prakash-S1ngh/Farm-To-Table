@@ -7,7 +7,7 @@ const fetchData = async () => {
         const response = await axios.get('http://localhost:4000/farmers/api/v2/gethistory', {
             withCredentials: true,
         });
-        return response.data.data; 
+        return response.data.data;
     } catch (error) {
         console.log("An error occurred while fetching details:", error.message);
         return [];
@@ -21,9 +21,11 @@ const updateProduct = async (product) => {
             name: prompt("Enter new name:", product.name) || product.name,
             description: prompt("Enter new description:", product.description) || product.description,
             price: parseFloat(prompt("Enter new price:", product.price)) || product.price,
-            quantity: parseInt(prompt("Enter new quantity:", product.quantity)) || product.quantity
+            quantity: parseInt(prompt("Enter new quantity:", product.quantity)) || product.quantity,
+            prodImage: String(prompt("Enter new imageUrl:", product.prodImage)) || product.prodImage
         };
-        
+        console.log("updateProduct ", updatedProduct);
+
         await axios.put(`http://localhost:4000/farmers/api/v2/updateproduct`, updatedProduct, {
             withCredentials: true,
         });
@@ -33,6 +35,23 @@ const updateProduct = async (product) => {
         alert("An error occurred while updating the product.");
     }
 }
+
+const deleteProduct = async (product_id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this product?");
+    if (!confirmDelete) return;
+
+    try {
+        await axios.delete(`http://localhost:4000/farmers/api/v2/deleteProduct/${product_id}`, {
+            withCredentials: true,
+        });
+        alert("Product deleted successfully!");
+        fetchData(); // Refresh the data without reloading
+    } catch (error) {
+        console.error("Error deleting product:", error.message);
+        alert("An error occurred while deleting the product.");
+    }
+}
+
 
 const FarmerProd = () => {
     const [data, setData] = useState([]);
@@ -95,6 +114,12 @@ const FarmerProd = () => {
                                                 onClick={() => updateProduct(product)}
                                             >
                                                 Update
+                                            </button>
+                                            <button
+                                                className="delete-button"
+                                                onClick={() => deleteProduct(product.product_id)}
+                                            >
+                                                Delete
                                             </button>
                                         </td>
                                     </tr>

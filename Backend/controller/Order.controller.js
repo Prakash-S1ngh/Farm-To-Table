@@ -92,8 +92,8 @@ exports.createOrder = async (req, res) => {
       }
   
       // Define the query to get orders for the customer
-      const orderQuery = 'SELECT * FROM Orders WHERE customer_id=?';
-      
+      const orderQuery = 'SELECT * FROM Orders WHERE customer_id=? ORDER BY order_date DESC'; // Orders by latest date first
+  
       // Set up the database connection
       const db = await setupConnection();
   
@@ -108,7 +108,12 @@ exports.createOrder = async (req, res) => {
       }
   
       // Prepare to fetch order details for each order
-      const orderDetailsQuery = 'SELECT * FROM Order_Details WHERE order_id=?';
+      const orderDetailsQuery = `
+        SELECT od.*, p.name , p.prodImage 
+        FROM Order_Details od
+        JOIN Product p ON od.product_id = p.product_id
+        WHERE od.order_id = ?
+      `;
   
       // Iterate over each order and fetch its details
       for (let order of orderResult) {
@@ -130,4 +135,5 @@ exports.createOrder = async (req, res) => {
       });
     }
   };
+  
   

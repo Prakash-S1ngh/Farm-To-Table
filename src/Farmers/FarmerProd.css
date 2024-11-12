@@ -67,16 +67,34 @@
     max-width: 100px;
     height: auto;
   }
-  .update-button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
+ 
 
-.update-button:hover {
-    background-color: #45a049;
-}
+  .update-button,
+  .delete-button {
+      background-color: #4CAF50; /* Initial background color for the update button */
+      color: white;
+      border: none;
+      padding: 6px 10px; /* Reduced padding to make the buttons smaller */
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px; /* Adjusted font size for a more compact look */
+      transition: background-color 0.3s;
+  }
+  
+  .update-button {
+      background-color: #4CAF50; /* Update button color */
+      margin-right: 6px; /* Reduced margin to maintain balance between buttons */
+  }
+  
+  .update-button:hover {
+      background-color: #45a049;
+  }
+  
+  .delete-button {
+      background-color: #f44336; /* Delete button color */
+  }
+  
+  .delete-button:hover {
+      background-color: #e41e1e;
+  }
+  
