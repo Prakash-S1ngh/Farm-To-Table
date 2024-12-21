@@ -1,0 +1,166 @@
+/* Dashboard Container */
+.dashboard-container {
+    padding: 20px;
+    background-color: #f4f5f7;
+  }
+  
+  /* Metrics Grid */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .metric-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+  }
+  
+  .metric-content {
+    display: flex;
+    align-items: center;
+  }
+  
+  .metric-icon-wrapper {
+    margin-right: 15px;
+  }
+  
+  .metric-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .green-icon { color: #10b981; }
+  .blue-icon { color: #3b82f6; }
+  .purple-icon { color: #8b5cf6; }
+  .orange-icon { color: #f97316; }
+  
+  .metric-details {
+    flex-grow: 1;
+  }
+  
+  .metric-title {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 5px;
+  }
+  
+  .metric-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #111827;
+  }
+  
+  .metric-change {
+    color: #10b981;
+    font-size: 0.75rem;
+  }
+  
+  /* Charts Grid */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .chart-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .chart-header {
+    padding: 15px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .chart-header h2 {
+    margin: 0;
+    font-size: 1.125rem;
+    color: #111827;
+  }
+  
+  .chart-content {
+    padding: 15px;
+  }
+  
+  .sales-chart-placeholder,
+  .pie-chart-placeholder {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f9fafb;
+    color: #6b7280;
+  }
+  
+  /* Recent Orders */
+  .orders-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .orders-header {
+    padding: 15px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .orders-header h2 {
+    margin: 0;
+    font-size: 1.125rem;
+    color: #111827;
+  }
+  
+  .orders-content {
+    padding: 15px;
+  }
+  
+  .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .orders-table thead {
+    background-color: #f9fafb;
+  }
+  
+  .orders-table th,
+  .orders-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .order-total {
+    font-weight: bold;
+    text-align: right;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .metrics-grid,
+    .charts-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .dashboard-container {
+      padding: 10px;
+    }
+  
+    .metric-card {
+      flex-direction: column;
+      text-align: center;
+    }
+  
+    .metric-icon-wrapper {
+      margin-right: 0;
+      margin-bottom: 10px;
+    }
+  }

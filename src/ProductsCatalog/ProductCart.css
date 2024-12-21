@@ -5,6 +5,7 @@
   padding: 20px;
   background-color: #f9f9f9;
   min-height: 100vh;
+  justify-content: space-between;
 }
 
 /* Sidebar styles */
@@ -20,6 +21,7 @@
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 15px;
+  color: #333;
 }
 
 .category-list {

@@ -92,7 +92,7 @@ exports.createOrder = async (req, res) => {
       }
   
       // Define the query to get orders for the customer
-      const orderQuery = 'SELECT * FROM Orders WHERE customer_id=? ORDER BY order_date DESC'; // Orders by latest date first
+      const orderQuery = 'SELECT * FROM Orders WHERE customer_id=? ORDER BY order_id DESC'; // Orders by latest date first
   
       // Set up the database connection
       const db = await setupConnection();

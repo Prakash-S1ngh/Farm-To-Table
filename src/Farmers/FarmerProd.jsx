@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import './FarmerProd.css';
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 const fetchData = async () => {
     try {
@@ -68,7 +69,8 @@ const FarmerProd = () => {
         <div className="settings-container">
             <aside className="sidebar">
                 <ul>
-                    <li><a href="/UserProfile"><span className="nav-icon">📊</span> Dashboard</a></li>
+                    <li><Link to='/'>Home</Link></li>
+                    <li><Link to="/UserProfile"><span className="nav-icon">📊</span> Dashboard</Link></li>
                     <li><a href="#"><span className="nav-icon">📜</span> Farm Orders</a></li>
                     <li>Log-out</li>
                 </ul>
@@ -85,7 +87,7 @@ const FarmerProd = () => {
                                 <th>Date Supplied</th>
                                 <th>Price</th>
                                 <th>Name</th>
-                                <th>Description</th>
+    
                                 <th>Image</th>
                                 <th>Actions</th>
                             </tr>
@@ -100,7 +102,7 @@ const FarmerProd = () => {
                                         <td>{new Date(product.date_supplied).toLocaleDateString()}</td>
                                         <td>₹{product.price}</td>
                                         <td>{product.name}</td>
-                                        <td>{product.description}</td>
+                                       
                                         <td>
                                             <img
                                                 src={product.prodImage}

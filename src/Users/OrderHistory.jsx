@@ -83,6 +83,7 @@ const OrderHistory = () => {
                         <th>Quantity</th>
                         <th>Price</th>
                         <th>Image</th>
+                        <th>Subtotal</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -93,6 +94,7 @@ const OrderHistory = () => {
                           <td>{detail.quantity}</td>
                           <td>{detail.price}</td>
                           <td><img src={detail.prodImage} alt={detail.product_name} /></td>
+                          <td>{detail.quantity*detail.price}</td>
                         </tr>
                       ))}
                     </tbody>

@@ -1,9 +1,9 @@
 const express = require('express');
-const setupConnection = require('./config/database.config');
 const router = require('./router/User.router');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const farmrouter = require('./router/Farmer.router');
+const adminrouter  = require('./Admin/Routes/User.router');
 require('dotenv').config();
 const app = express();
 
@@ -19,8 +19,8 @@ const corsOptions = {
   
   app.use(cors(corsOptions));
 
-// Database Connection
-const connection = setupConnection(); // Ensure you handle the connection properly
+// // Database Connection
+// const connection = setupConnection(); // Ensure you handle the connection properly
 
 app.get('/', (req, res) => {
     return res.send(`<h1>The server is running</h1>`);
@@ -28,6 +28,7 @@ app.get('/', (req, res) => {
 
 app.use('/users/api/v2', router);
 app.use('/farmers/api/v2',farmrouter);
+app.use('/adminpanel/api/v2',adminrouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

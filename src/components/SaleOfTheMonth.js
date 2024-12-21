@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const SaleOfTheMonth = () => {
   const [timeLeft, setTimeLeft] = useState({
@@ -56,7 +57,7 @@ const SaleOfTheMonth = () => {
           <span className="label">SECS</span>
         </div>
       </div>
-      <button className="shop-now">Shop Now <Clock /></button>
+      <button className="shop-now"><Link to='/shop'>Shop Now </Link> <Clock /></button>
     </div>
   );
 };

@@ -1,0 +1,135 @@
+.all-suppliers-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto; /* Allow scrolling for overflowing content */
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.view-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.view-toggle button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+}
+
+.view-toggle button.active {
+    background-color: #0056b3;
+}
+
+.supplier-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Responsive cards */
+.supplier-card {
+    background: white;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    width: 300px;
+    max-width: 100%; /* Make cards responsive */
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover effect for 3D shadow */
+.supplier-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.profile-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #f0f0f0;
+}
+
+.supplier-name {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.supplier-email, .supplier-phone, .supplier-orders, .supplier-stats {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.delete-btn {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.delete-btn:disabled {
+    background-color: #ff9999;
+    cursor: not-allowed;
+}
+
+.success-message {
+    color: green;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.loader, .error {
+    font-size: 1.25rem;
+    color: #555;
+    margin-top: 20px;
+}
+
+/* Ensure neat gaps and responsiveness */
+@media (max-width: 768px) {
+    .supplier-cards {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .supplier-card {
+        width: 90%; /* Adjust width for smaller screens */
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+    .supplier-cards {
+        gap: 15px; /* Reduce gap for medium screens */
+    }
+
+    .supplier-card {
+        width: 250px; /* Adjust card size for medium screens */
+    }
+}

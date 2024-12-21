@@ -1,26 +1,28 @@
-
-
-
-
 const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
+let connection;
+
 async function setupConnection() {
     try {
-        const connection = mysql.createConnection({
+        connection = await mysql.createConnection({
             host: 'localhost',
-            user: "root",
+            user: 'root',
             password: '9798006085@p',
-            database: "farmTotable"
+            database: 'farmTotable',
         });
 
         console.log('The MySQL database is connected');
         return connection;
     } catch (err) {
-        console.log('An error occurred while connecting to MySQL:', err);
+        console.error('An error occurred while connecting to MySQL:', err);
+        throw err; // Ensure errors are propagated
     }
 }
 
-module.exports = setupConnection;
+// Initialize the connection immediately when the module is imported
+setupConnection();
+
+module.exports = { setupConnection, connection };

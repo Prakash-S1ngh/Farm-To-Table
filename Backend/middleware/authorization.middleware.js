@@ -22,7 +22,8 @@ exports.authorization = async (req, res, next) => {
         } catch (error) {
             return res.status(401).json({
                 success: false,
-                message: "Invalid or expired token"
+                message: "Invalid or expired token",
+                error:error.message
             });
         }
 

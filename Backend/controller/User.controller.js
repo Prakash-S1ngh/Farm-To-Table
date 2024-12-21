@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const setupConnection = require('../config/database.config');
+const {setupConnection} = require('../config/database.config');
 const { generateCustomerId, getCustomerCount } = require('../config/User.counter');
 const { mailsending } = require('../config/mailsending.config');
 const { uploadOnCloudinary } = require('../config/cloudinary.config');
@@ -31,6 +31,7 @@ exports.createUser = async (req, res) => {
       if (imagePath) {
           imgUrl = await uploadOnCloudinary(imagePath.path); // Upload and get the URL
       }
+      console.log("img ",imgUrl);
 
       // SQL query to insert data into the 'Customer' table
       const query = `INSERT INTO Customer (customer_id, first_name, last_name, email, password, phone, profile_image) 
@@ -92,6 +93,7 @@ exports.loginUser = async (req, res) => {
         const query = `SELECT * FROM Customer WHERE email = ?`;
 
         const db = await setupConnection();
+        console.log("login ", db);
         const [result] = await db.execute(query, [email]);
 
         if (result.length === 0) {
@@ -236,132 +238,131 @@ exports.validateOtp = async (req, res) => {
     }
 }
 
+
+
+
 exports.getUser = async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
       return res.status(400).json({
-        message: "The middleware is not working"
+        message: "The middleware is not working",
       });
     }
 
-    // Query to fetch user data from the Customer table
-    const userQuery = `
-      SELECT customer_id, first_name, last_name, email, phone, profile_image 
-      FROM Customer 
-      WHERE customer_id = ?
-    `;
-
-    // Query to fetch address data from the Address table
-    const addressQuery = `
-      SELECT street, city, country, state, postal_code 
-      FROM Address 
-      WHERE customer_id = ?
+    const query = `
+      SELECT c.customer_id, c.first_name, c.last_name, c.email, c.phone, c.profile_image, 
+             IFNULL(a.street, NULL) AS street, 
+             IFNULL(a.city, NULL) AS city, 
+             IFNULL(a.country, NULL) AS country, 
+             IFNULL(a.state, NULL) AS state, 
+             IFNULL(a.postal_code, NULL) AS postal_code
+      FROM Customer AS c
+      LEFT JOIN Address AS a ON c.customer_id = a.customer_id
+      WHERE c.customer_id = ?
     `;
 
     const db = await setupConnection();
+    const [result] = await db.execute(query, [user.customer_id]);
 
-    // Execute the query to get user data
-    const [userResult] = await db.execute(userQuery, [user.customer_id]);
-    if (userResult.length === 0) {
-      return res.status(404).json({
-        message: "User not found"
+    if (result.length === 0) {
+      return res.status(400).json({
+        message: "User not found",
       });
     }
-
-    // Execute the query to get address data
-    const [addressResult] = await db.execute(addressQuery, [user.customer_id]);
-
-    // Prepare the response object with user data
-    const responseData = {
-      ...userResult[0],
-      address: addressResult[0] || null // Set address as null if no address is found
-    };
-
-    // Return the merged user data
+    console.log(result[0]);
+    // Return the user data with address fields as null if not available
     return res.status(200).json({
-      user: responseData
+      user: result[0],
     });
-
   } catch (error) {
     console.error("Error occurred while fetching the user data:", error);
     return res.status(500).json({
-      message: "Error occurred while fetching the user data"
+      message: "Error occurred while fetching the user data",
     });
   }
 };
 
+
 exports.updateUser = async (req, res) => {
-    let db;
-    try {
-      const user = req.user;
-      const { firstName, lastName, email, phone, profileImage, street, city, country, state, postalCode } = req.body;
-  
-      console.log('Request Body Parameters:', {
-        firstName,
-        lastName,
-        email,
-        phone,
-        profileImage,
-        street,
-        city,
-        country,
-        state,
-        postalCode
-      });
-  
-      if (!user) {
-        return res.status(400).json({
-          message: "The middleware is not working"
-        });
-      }
-  
-      db = await setupConnection();
-      await db.beginTransaction(); // Start a transaction
-  
-      // Update Customer table
-      const updateCustomerQuery = `
-        UPDATE Customer 
-        SET first_name = ?, last_name = ?, email = ?, phone = ?, profile_image = ? 
-        WHERE customer_id = ?
-      `;
-      await db.execute(updateCustomerQuery, [firstName, lastName, email, phone, profileImage, user.customer_id]);
-  
-      // Check if the address exists for the user
-      const checkAddressQuery = `SELECT * FROM Address WHERE customer_id = ?`;
-      const [addressRows] = await db.execute(checkAddressQuery, [user.customer_id]);
-  
-      if (addressRows.length > 0) {
-        // Address exists, so update it
-        const updateAddressQuery = `
-          UPDATE Address 
-          SET street = ?, city = ?, country = ?, state = ?, postal_code = ? 
-          WHERE customer_id = ?
-        `;
-        await db.execute(updateAddressQuery, [street, city, country, state, postalCode, user.customer_id]);
-      } else {
-        // Address does not exist, so create it
-        const addressId = `ADDR${Date.now()}`; // Generate a unique address ID
-        const createAddressQuery = `
-          INSERT INTO Address (address_id, customer_id, street, city, state, postal_code, country)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `;
-        await db.execute(createAddressQuery, [addressId, user.customer_id, street, city, state, postalCode, country]);
-      }
-  
-      await db.commit(); // Commit the transaction
-  
-      return res.status(200).json({
-        message: "User and address data updated successfully"
-      });
-    } catch (error) {
-      if (db) {
-        await db.rollback(); // Rollback the transaction on error
-      }
-      console.error("Error occurred while updating the user data:", error);
-      return res.status(500).json({
-        message: "Error occurred while updating the user data"
+  let db;
+  try {
+    const user = req.user;
+    const { firstName, lastName, email, phone, profile_image, street, city, country, state, postalCode } = req.body;
+
+    if (!user) {
+      return res.status(400).json({
+        message: "The middleware is not working",
       });
     }
-  };
-  
+
+    // Replace undefined with null
+    const profileImage = profile_image ?? null;
+    const safeFirstName = firstName ?? null;
+    const safeLastName = lastName ?? null;
+    const safeEmail = email ?? null;
+    const safePhone = phone ?? null;
+    const safeStreet = street ?? null;
+    const safeCity = city ?? null;
+    const safeCountry = country ?? null;
+    const safeState = state ?? null;
+    const safePostalCode = postalCode ?? 462003;
+
+    db = await setupConnection();
+    await db.beginTransaction(); // Start a transaction
+
+    // Update Customer table
+    const updateCustomerQuery = `
+      UPDATE Customer 
+      SET 
+        first_name = COALESCE(?, first_name), 
+        last_name = COALESCE(?, last_name), 
+        email = COALESCE(?, email), 
+        phone = COALESCE(?, phone), 
+        profile_image = COALESCE(?, profile_image)
+      WHERE customer_id = ?
+    `;
+    await db.execute(updateCustomerQuery, [safeFirstName, safeLastName, safeEmail, safePhone, profileImage, user.customer_id]);
+
+    // Check if the address exists for the user
+    const checkAddressQuery = `SELECT * FROM Address WHERE customer_id = ?`;
+    const [addressRows] = await db.execute(checkAddressQuery, [user.customer_id]);
+
+    if (addressRows.length > 0) {
+      // Address exists, so update it
+      const updateAddressQuery = `
+        UPDATE Address 
+        SET 
+          street = COALESCE(?, street), 
+          city = COALESCE(?, city), 
+          country = COALESCE(?, country), 
+          state = COALESCE(?, state), 
+          postal_code = COALESCE(?, postal_code)
+        WHERE customer_id = ?
+      `;
+      await db.execute(updateAddressQuery, [safeStreet, safeCity, safeCountry, safeState, safePostalCode, user.customer_id]);
+    } else {
+      // Address does not exist, so create it
+      const addressId = `ADDR${Date.now()}`; // Generate a unique address ID
+      const createAddressQuery = `
+        INSERT INTO Address (address_id, customer_id, street, city, state, postal_code, country)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
+      await db.execute(createAddressQuery, [addressId, user.customer_id, safeStreet, safeCity, safeState, safePostalCode, safeCountry]);
+    }
+
+    await db.commit(); // Commit the transaction
+
+    return res.status(200).json({
+      message: "User and address data updated successfully",
+    });
+  } catch (error) {
+    if (db) {
+      await db.rollback(); // Rollback the transaction on error
+    }
+    console.error("Error occurred while updating the user data:", error);
+    return res.status(500).json({
+      message: "Error occurred while updating the user data",
+    });
+  }
+};

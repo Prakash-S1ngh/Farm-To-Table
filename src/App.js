@@ -19,6 +19,9 @@ import Payment from './Payment/Payment.jsx';
 import OrderHistory from './Users/OrderHistory.jsx';
 import Testimonials from './components/Testimonials.js';
 import Wishlist from './Carts/Whishlist.jsx';
+import ContactUs from './components/Contactus.js';
+import AdminPanel from './Admin/AdminPanel.jsx';
+import InventoryPage from './Admin/Inventory/InventoryPage.jsx';
 // import ProductdCard from './components/ProductCard.js';
 
 const App = () => {
@@ -37,12 +40,15 @@ const App = () => {
           <Route path='/FarmProducts' element={<FarmerProd/>}/>
           <Route path='/shop' element={<ProductsCart/>}/>
           <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/ContactUs" element={<ContactUs/>} />
           <Route path="/Cart" element={<Cart />} />
           <Route path="/Payment" element={<Payment />} />
           <Route path="/Payment" element={<Payment />} />
           <Route path="/ordersHistory" element={<OrderHistory/>} />
-          <Route path="/Testimonials" element={<Testimonials/>} />
+          {/* <Route path="/Testimonials" element={<Testimonials/>} /> */}
           <Route path="/Wishlist" element={<Wishlist/>} />
+          <Route path="/admin" element={<AdminPanel/>} />
+          <Route path="/admin/inven" element={<InventoryPage/>} />
 
 
 

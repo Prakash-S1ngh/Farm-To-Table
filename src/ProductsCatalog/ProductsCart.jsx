@@ -1,42 +1,55 @@
 import React, { useContext, useEffect, useState } from 'react';
-import './ProductCart.css'; // Ensure to create this CSS file for styling
+import './ProductCart.css';
 import Header from '../components/Header';
 import UserContext from '../Users/Context/UserContext';
 import { useNavigate } from 'react-router-dom';
 import ProductContext from './ProductContext';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { AiOutlineHeart } from 'react-icons/ai'; // Import heart icon
+import { AiOutlineHeart } from 'react-icons/ai';
 
 const ProductsCart = () => {
   const navigate = useNavigate();
   const { isUser } = useContext(UserContext);
   const {
-    products,
+    products = [], // Fallback to an empty array
     loading,
     error,
     addToCart,
-    addToWishlist // Use ProductContext for wishlist management
+    addToWishlist,
   } = useContext(ProductContext);
 
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('CAT0');
-  
-  const addCart = (product) => {
-    toast.success(`${product.name} added to cart!`);
+
+  useEffect(() => {
+    // Initialize filtered products or log invalid data
+    if (Array.isArray(products)) {
+      setFilteredProducts(products);
+    } else {
+      console.error('Invalid products data:', products);
+    }
+  }, [products]);
+
+  useEffect(() => {
+    // Update filtered products when category changes
+    setFilteredProducts(
+      selectedCategory === 'CAT0'
+        ? products
+        : products.filter((product) => product.category_id === selectedCategory)
+    );
+  }, [selectedCategory, products]);
+
+  const handleCategoryChange = (event) => {
+    setSelectedCategory(event.target.value);
   };
 
-  const addWishlist = (product) => {
-    toast.info(`${product.name} added to wishlist!`);
-  };
-
-  // Handle redirection if the user is not logged in
   const cartHandler = (product) => {
     if (!isUser) {
       navigate('/login');
     } else {
-      addToCart(product); // Add product to the cart using ProductContext
-      toast.success('Product added to cart successfully!');
+      addToCart(product);
+      toast.success(`${product.name} added to cart successfully!`);
     }
   };
 
@@ -44,143 +57,55 @@ const ProductsCart = () => {
     if (!isUser) {
       navigate('/login');
     } else {
-      addToWishlist(product); // Add product to the wishlist using ProductContext
-      toast.success('Product added to wishlist successfully!');
+      addToWishlist(product);
+      toast.info(`${product.name} added to wishlist successfully!`);
     }
   };
 
-  useEffect(() => {
-    // Set initial filtered products when products are loaded
-    if (products.length > 0) {
-      setFilteredProducts(products);
-    }
-  }, [products]);
-
-  useEffect(() => {
-    // Filter products based on selected category
-    if (selectedCategory === 'CAT0') {
-      setFilteredProducts(products); // Show all products if 'All items' is selected
-    } else {
-      const filtered = products.filter(
-        (product) => product.category_id === selectedCategory
-      );
-      setFilteredProducts(filtered);
-    }
-  }, [selectedCategory, products]);
-
-  const handleCategoryChange = (event) => {
-    setSelectedCategory(event.target.value);
-  };
-
-  if (loading) {
-    return <div>Loading...</div>; // Show loading message while fetching data
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>; // Show error message if any
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
 
   return (
     <div>
       <Header />
-      <ToastContainer
-  position="top-center" // This will position the toast notifications at the top center of the page
-  autoClose={3000} // Optional: Duration for the toast to auto-close (in milliseconds)
-  hideProgressBar={false} // Optional: Show or hide the progress bar
-  newestOnTop={true} // Optional: Show newest toast notifications on top
-  closeOnClick // Optional: Close the toast when clicked
-  rtl={false} // Optional: Right-to-left text direction
-  pauseOnFocusLoss // Optional: Pause the timer when the window loses focus
-  draggable // Optional: Allow drag and dismiss
-  pauseOnHover // Optional: Pause the timer when hovered
-/>
+      <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} />
 
       <div className="product-container">
         <aside className="filters-sidebar">
-          <div className="category-section">
-            <h3>All Categories</h3>
-            <ul className="category-list">
-              <li>
+          <h3>All Categories</h3>
+          <ul className="category-list">
+            {[
+              { id: 'CAT0', label: 'All items' },
+              { id: 'CAT1', label: 'Fresh Fruit' },
+              { id: 'CAT2', label: 'Vegetables' },
+              { id: 'CAT5', label: 'Dairy' },
+              { id: 'CAT3', label: 'Spices' },
+              { id: 'CAT4', label: 'Exotics' },
+              { id: 'CAT6', label: 'Others' },
+            ].map(({ id, label }) => (
+              <li key={id}>
                 <input
                   type="radio"
                   name="category"
-                  value="CAT0"
-                  checked={selectedCategory === 'CAT0'}
+                  value={id}
+                  checked={selectedCategory === id}
                   onChange={handleCategoryChange}
                 />{' '}
-                All items
+                {label}
               </li>
-              <li>
-                <input
-                  type="radio"
-                  name="category"
-                  value="CAT1"
-                  checked={selectedCategory === 'CAT1'}
-                  onChange={handleCategoryChange}
-                />{' '}
-                Fresh Fruit
-              </li>
-              <li>
-                <input
-                  type="radio"
-                  name="category"
-                  value="CAT2"
-                  checked={selectedCategory === 'CAT2'}
-                  onChange={handleCategoryChange}
-                />{' '}
-                Vegetables
-              </li>
-              <li>
-                <input
-                  type="radio"
-                  name="category"
-                  value="CAT5"
-                  checked={selectedCategory === 'CAT5'}
-                  onChange={handleCategoryChange}
-                />{' '}
-                Dairy
-              </li>
-              <li>
-                <input
-                  type="radio"
-                  name="category"
-                  value="CAT3"
-                  checked={selectedCategory === 'CAT3'}
-                  onChange={handleCategoryChange}
-                />{' '}
-                Spices
-              </li>
-              <li>
-                <input
-                  type="radio"
-                  name="category"
-                  value="CAT4"
-                  checked={selectedCategory === 'CAT4'}
-                  onChange={handleCategoryChange}
-                />{' '}
-                Exotics
-              </li>
-              <li>
-                <input
-                  type="radio"
-                  name="category"
-                  value="CAT6"
-                  checked={selectedCategory === 'CAT6'}
-                  onChange={handleCategoryChange}
-                />{' '}
-                Others
-              </li>
-            </ul>
-          </div>
+            ))}
+          </ul>
         </aside>
 
         <div className="right-grid">
+          {console.log("the products of world  ", filteredProducts)}
           {filteredProducts.length > 0 ? (
+            
             filteredProducts.map((product, index) => (
               <div key={index} className="product-card">
-                <img src={product.prodImage} alt={product.name} />
+                <img src={product.prodImage || 'default-image-url.jpg'} alt={product.name} />
                 <h3>{product.name}</h3>
-                <p>Price: Rs {product.price}</p>
+                <p>Price: Rs {product.price || 'N/A'}</p>
                 <div className="product-actions">
                   <button
                     className="product-action-btn"

@@ -6,8 +6,7 @@ const ShopByCategory = () => {
   const items = [
     { name: 'Fresh Vegetables', className: 'vegetables' },
     { name: 'Fresh Fruits', className: 'fruits' },
-    { name: 'Grains', className: 'grains' },
-    { name: 'Teas', className: 'teas' },
+    { name: 'Exotic', className: 'grains' },
     { name: 'Dairy', className: 'dairy' },
     { name: 'Natural Supplements', className: 'supplements' },
     { name: 'Flowers & Plants', className: 'flowers' },

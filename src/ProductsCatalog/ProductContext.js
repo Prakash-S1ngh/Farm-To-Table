@@ -16,7 +16,7 @@ export const ProductProvider = ({ children }) => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get('http://localhost:4000/farmers/api/v2/getAllproducts');
-        setProducts(response.data.result[0]);
+        setProducts(response.data.products);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching products:', error);

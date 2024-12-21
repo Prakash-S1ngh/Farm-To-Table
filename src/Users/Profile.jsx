@@ -41,17 +41,17 @@ const Profile = () => {
       });
       setUserData(response.data.user);
 
-      const { first_name, last_name, email, phone, profile_image, address } = response.data.user;
+      const { first_name, last_name, email, phone, profile_image, street,state , country, postal_code , city } = response.data.user;
       setFormData({
         firstName: first_name || '',
         lastName: last_name || '',
         email: email || '',
         phone: phone || '',
-        street: address?.street || '',
-        city: address?.city || '',
-        postalCode: address?.postal_code || '',
-        country: address?.country || '',
-        state: address?.state || '',
+        street: street || '',
+        city: city || '',
+        postalCode: postal_code || '',
+        country: country || '',
+        state: state || '',
         profileImage: profile_image || userProfileImage,
       });
     } catch (error) {
@@ -79,7 +79,7 @@ const Profile = () => {
         postalCode: response.data.farmer.postal_code || '',
         country: response.data.farmer.country || '',
         state: response.data.farmer.state || '',
-        profileImage: response.data.farmer.profileImage || null,
+        profileImage: response.data.farmer.profile_image || response.data.farmer.profileImage || null,
       });
     } catch (error) {
       console.error('Error fetching farmer data:', error);
@@ -106,9 +106,23 @@ const Profile = () => {
         ? 'http://localhost:4000/farmers/api/v2/farmAddress'
         : 'http://localhost:4000/users/api/v2/updateUser';
 
-      await axios.post(url, formData, {
+        console.log(formData);
+      if(!isFarmer){
+        await axios.post(url, formData, {
+          withCredentials: true,
+        });
+      }
+      else{
+        await axios.post(url, {
+          street: formData.street,
+          city: formData.city,
+          postal_code: formData.postalCode,
+          country: formData.country,
+          state: formData.state,
+        }, {
         withCredentials: true,
       });
+      }
 
       // Re-fetch data to re-render
       if (isFarmer) {
@@ -135,6 +149,18 @@ const Profile = () => {
 
 
       // Make the POST request to update the address
+      if(!isFarmer){
+        await axios.post(addressUrl, {
+          street: formData.street,
+          city: formData.city,
+          postal_code: formData.postalCode,
+          country: formData.country,
+          state: formData.state,
+        }, {
+        withCredentials: true,
+      });
+    }
+    else{
       await axios.post(addressUrl, {
         street: formData.street,
         city: formData.city,
@@ -142,9 +168,10 @@ const Profile = () => {
         country: formData.country,
         state: formData.state,
       }, {
-        withCredentials: true,
-      });
-
+      withCredentials: true,
+    });
+    }
+      
       // Re-fetch data to reflect the updated address
       if (isFarmer) {
         await fetchFarmerData();
@@ -183,6 +210,7 @@ const Profile = () => {
         <div className="profile-nav-content">
           <h2>Navigation</h2>
           <ul>
+          <li><Link to='/'>Home</Link></li>
             <li><Link to='/UserProfile'> <span className="nav-icon">📊</span> Dashboard</Link></li>
             {!isFarmer && (
               <>
@@ -192,7 +220,10 @@ const Profile = () => {
               </>
             )}
             {isFarmer && (
+              <>
+              
               <li><a href="/FarmProducts"><span className="nav-icon">📜</span> Farm Orders</a></li>
+              </>
             )}
             <li onClick={logoutHandler}><Link to='/'><span className="nav-icon">🚪</span> Log-out</Link></li>
           </ul>
@@ -316,9 +347,9 @@ const Profile = () => {
           <button type="submit" className="profile-submit-button">Save Changes</button>
         </form>
 
-        <form onSubmit={updateAddress}>
+        {/* <form onSubmit={updateAddress}>
           <button type="submit" className="profile-update-address-button">Update Address</button>
-        </form>
+        </form> */}
       </main>
     </div>
   );

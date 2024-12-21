@@ -1,9 +1,9 @@
 // farmerController.js
 const express = require('express');
-const setupConnection = require('../config/database.config');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { uploadOnCloudinary } = require('../config/cloudinary.config');
+const { setupConnection } = require('../config/database.config');
 require('dotenv').config();
 
 
@@ -27,25 +27,7 @@ async function getFarmerId() {
         throw new Error(error.message);
     }
 }
-async function getInvetoryId() {
-    try {
-        const db = await setupConnection(); // Ensure you have a connection
 
-        const query = 'SELECT count FROM counters WHERE name = ?';
-        const [result] = await db.execute(query, ['inventory']); // Pass 'farmnum' as a string
-
-        if (result.length === 0) {
-            throw new Error('Counter not found');
-        }
-
-        let num = result[0].count; // Assuming the column is 'count'
-        num++;
-        await db.execute('UPDATE counters SET count = ? WHERE name = ?', [num, 'inventory']);
-        return `INV${num}`;
-    } catch (error) {
-        console.log("An error occured in generating the inventory_id", error.message);
-    }
-}
 async function getproductnum() {
     try {
         const db = await setupConnection(); // Ensure you have a connection
@@ -281,67 +263,6 @@ exports.AddressforFarmer = async (req, res) => {
 }
 
 
-
-exports.addproducts = async (req, res) => {
-    try {
-        const { name, categoryname, price, quantity, describption } = req.body;
-        const farmer = req.Farmer;
-        const imagePath = req.file; // Assuming you're using multer for handling file uploads
-
-        // Get the current date in the format 'YYYY-MM-DD HH:MM:SS'
-        const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-        // Check if all required fields and the image are provided
-        if (!(name && categoryname && price && quantity && describption && imagePath)) {
-            return res.json({
-                success: false,
-                message: "All fields including the product image are required",
-            });
-        }
-
-
-        // Generate necessary IDs
-        const invt_id = await getInvetoryId();
-        const category_id = categoryname;
-        const product_id = await getproductnum();
-
-        // Upload the product image to Cloudinary
-        const imageUrl = await uploadOnCloudinary(imagePath.path); // Use imagePath.path for the file path
-
-        // Establish a connection to the database
-        const db = await setupConnection();
-
-
-        // Prepare the queries
-        const query1 = 'INSERT INTO Inventory (id, product_id, supplier_id, quantity, date_supplied, price, name, description, category_id, prodImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        const query2 = 'INSERT INTO Product (product_id, name, description, price, stock, category_id , created_at, prodImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-
-        console.log("hello 1");
-        // Execute the queries
-        const result2 = await db.execute(query2, [product_id, name, describption, price, quantity, category_id, currentDate, imageUrl]);
-        const result1 = await db.execute(query1, [invt_id, product_id, farmer.id, quantity, currentDate, price, name, describption, category_id, imageUrl]);
-        console.log("hello 2");
-
-        // Send a success response
-        return res.json({
-            success: true,
-            message: "Product added successfully",
-            data: {
-                inventory: result1,
-                product: result2
-            }
-        });
-
-    } catch (error) {
-        // Handle errors
-        return res.status(400).json({
-            success: false,
-            message: "An error occurred while adding the product",
-            error: error.message
-        });
-    }
-};
-
 exports.getFarmer = async (req, res) => {
     const farmerId = req.Farmer;
 
@@ -376,26 +297,58 @@ exports.getFarmer = async (req, res) => {
 
 exports.getallproduct = async (req, res) => {
     try {
-        const query = 'SELECT * FROM Product';
+        const query = `
+        SELECT 
+            name,
+            MAX(price) AS latest_price,  -- Get the latest price for each product name
+            GROUP_CONCAT(product_id) AS product_ids,  -- Combine product_ids as a comma-separated string
+            SUM(stock) AS total_stock,  -- Sum the stock for each product name
+            MAX(description) AS description,  -- Pick one description (could be the latest or any)
+            MAX(category_id) AS category_id,  -- Use the category of any product in the group
+            MAX(prodImage) AS prodImage  -- Use the image of any product in the group
+        FROM Product
+        GROUP BY name  -- Only group by name to combine all products with the same name
+        ORDER BY name;
+    `;
+    
         const db = await setupConnection();
-        const result = await db.execute(query);
-        if (result.length === 0) return res.status(400).json({
-            success: false,
-            message: "The product is not fetched"
-        });
+        const [result] = await db.execute(query);
+
+        if (result.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No products found"
+            });
+        }
+
+        // Transform data into the desired structure
+        const groupedProducts = result.map(product => ({
+            name: product.name,
+            stock: product.total_stock,
+            price: product.latest_price,  // Latest price from the query
+            description: product.description,
+            category_id: product.category_id,
+            prodImage: product.prodImage,
+            product_ids: product.product_ids.split(','), // Split comma-separated product_ids into an array
+        }));
+
         return res.status(200).json({
             success: true,
-            message: "The items are fetched",
-            result
+            message: "Products fetched successfully",
+            products: groupedProducts
         });
     } catch (error) {
-        res.status(400).json({
+        console.error("Error fetching products:", error);
+        res.status(500).json({
             success: false,
-            message: "An error ocurred in fetching data ",
+            message: "An error occurred while fetching products",
             error: error.message
         });
     }
-}
+};
+
+
+
 
 
 exports.getFarmerhistory = async (req, res) => {
@@ -426,6 +379,117 @@ exports.getFarmerhistory = async (req, res) => {
         });
     }
 }
+
+
+exports.addproducts = async (req, res) => {
+    try {
+        const { name, categoryname, price, quantity, description } = req.body;
+        const farmer_id = req.Farmer.id; // Assuming `req.Farmer` contains the authenticated farmer's ID
+        const imagePath = req.file; // Assuming you're using multer for handling file uploads
+
+        // Validate inputs
+        if (!(name && categoryname && price && quantity && description && imagePath)) {
+            return res.status(400).json({
+                success: false,
+                message: "All fields including the product image are required.",
+            });
+        }
+
+        // Upload the product image to Cloudinary
+        const imageUrl = await uploadOnCloudinary(imagePath.path); // Upload the image and get the URL
+
+        // Get the current date and time
+        const currentDate = new Date();
+        const date_added = currentDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+        const time_added = currentDate.toTimeString().split(' ')[0]; // Format: HH:MM:SS
+
+        // Setup the database connection
+        const db = await setupConnection();
+
+        // Check if the product already exists for the same farmer and category
+        const [existingProduct] = await db.query(
+            `SELECT * FROM farmproducts WHERE farmer_id = ? AND product_name = ? AND category_id = ?`,
+            [farmer_id, name, categoryname]
+        );
+
+        if (existingProduct.length > 0) {
+            // Product exists, update it
+            const product = existingProduct[0];
+            const updatedQuantity = parseFloat(product.quantity) + parseFloat(quantity); // Add to existing quantity
+            console.log("quantity",updatedQuantity);
+            console.log("quantity",product.quantity);
+            console.log("quantity",parseInt(quantity));
+            const updatedPrice = price; // You can also modify the price if needed
+
+            // Update farmproducts table
+            const updateProductResult = await db.query(
+                `UPDATE farmproducts 
+                SET quantity = ?, price = ?, image = ?, date_added = ?, time_added = ? 
+                WHERE product_name = ? AND farmer_id = ?`,
+                [updatedQuantity, updatedPrice, imageUrl, date_added, time_added, name, farmer_id]
+            );
+
+            // Log the update result
+            console.log("Updated farmproducts:", updateProductResult);
+
+            // Update the corresponding record in Allfarmproducts table
+            const total = updatedQuantity * updatedPrice; // Calculate the total value
+            const updateAllFarmProductsResult = await db.query(
+                `UPDATE Allfarmproducts 
+                SET total = ?, time = ?, date = ? 
+                WHERE farmProducts_id = ?`,
+                [total, time_added, date_added, product.id]
+            );
+
+            // Log the Allfarmproducts update result
+            console.log("Updated Allfarmproducts:", updateAllFarmProductsResult);
+
+            return res.status(200).json({
+                success: true,
+                message: "Product updated successfully.",
+                product_id: product.id, // Return the product ID for reference
+            });
+        } else {
+            // Product does not exist, insert a new one
+            const [farmProductResult] = await db.query(
+                `INSERT INTO farmproducts 
+                (farmer_id, product_name, category_id, quantity, price, image, status, date_added, time_added) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [farmer_id, name, categoryname, quantity, price, imageUrl, 'Pending', date_added, time_added]
+            );
+
+            const farmProducts_id = farmProductResult.insertId; // Get the ID of the inserted product
+
+            // Calculate total price for the product (quantity * price)
+            const total = quantity * price;
+
+            // Insert data into the Allfarmproducts table
+            const insertAllFarmProductsResult = await db.query(
+                `INSERT INTO Allfarmproducts 
+                (farmer_id, farmProducts_id, total, time, date, status) 
+                VALUES (?, ?, ?, ?, ?, ?)`,
+                [farmer_id, farmProducts_id, total, time_added, date_added, 'Pending']
+            );
+
+            // Log the insertion result into Allfarmproducts
+            console.log("Inserted into Allfarmproducts:", insertAllFarmProductsResult);
+
+            return res.status(201).json({
+                success: true,
+                message: "Product added successfully and is pending admin approval.",
+                product_id: farmProducts_id, // Return the product ID for reference
+            });
+        }
+    } catch (error) {
+        console.error("Error adding product:", error);
+        return res.status(500).json({
+            success: false,
+            message: "An error occurred while adding the product.",
+            error: error.message,
+        });
+    }
+};
+
 
 exports.updateProduct = async (req, res) => {
     try {

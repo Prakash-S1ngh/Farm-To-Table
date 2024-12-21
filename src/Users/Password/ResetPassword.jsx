@@ -5,7 +5,7 @@ import './ResetPassword.css'; // Importing CSS
 const ResetPassword = () => {
   const [formData, setFormData] = useState({
     otp: '',
-    newpassword: '' // make sure this matches the name attribute in the form
+    newpassword: ''
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -18,17 +18,21 @@ const ResetPassword = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Encode formData for x-www-form-urlencoded
-    const urlEncodedData = new URLSearchParams();
-    urlEncodedData.append('otp', formData.otp);
-    urlEncodedData.append('newpassword', formData.newpassword);
-
     try {
-      const response = await axios.post('http://localhost:4000/users/api/v2/verifying', urlEncodedData, {
-        withCredentials: true,
-      });
+      // Sending data as JSON
+      const response = await axios.post(
+        'http://localhost:4000/users/api/v2/verifying',
+       formData,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json' // Specify JSON content type
+          }
+        }
+      );
       setMessage('Password successfully updated!');
     } catch (error) {
+      console.log(error);
       setMessage('Failed to update password, please try again.');
     } finally {
       setLoading(false);
@@ -58,11 +62,11 @@ const ResetPassword = () => {
             <input
               type="password"
               id="newpassword"
-              name="newpassword" // matches formData key
+              name="newpassword"
               required
               placeholder="Enter new password"
               className="reset-input"
-              value={formData.newpassword} // updated to match the state
+              value={formData.newpassword}
               onChange={handleChange}
             />
           </div>

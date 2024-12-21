@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './AddProduct.css';
+import Header from '../components/Header.js';
 
 const AddProduct = () => {
     const [name, setName] = useState('');
@@ -25,8 +26,15 @@ const AddProduct = () => {
         formData.append('categoryname', categoryname);
         formData.append('price', price);
         formData.append('quantity', quantity);
-        formData.append('describption', description);
+        formData.append('description', description);
         formData.append('image', image);
+        console.log(formData.get('name'));
+        console.log(formData.get('categoryname'));
+        console.log(formData.get('price'));
+        console.log(formData.get('quantity'));
+        console.log("Des ",formData.get('description'));
+        console.log("img",formData.get('image'));
+        
 
         try {
             const response = await axios.post('http://localhost:4000/farmers/api/v2/addProducts', formData, {
@@ -36,6 +44,7 @@ const AddProduct = () => {
 
             setMessage(response.data.message);
         } catch (error) {
+            console.log(error);
             setMessage('Error adding product');
         } finally {
             setLoading(false);
@@ -43,6 +52,8 @@ const AddProduct = () => {
     };
 
     return (
+        <>
+        <Header/>
         <div className="add-product-container">
             <h1>Add New Product</h1>
             <form onSubmit={handleSubmit} className="product-form">
@@ -114,6 +125,7 @@ const AddProduct = () => {
                 <button type="submit" className="submit-button">Add Product</button>
             </form>
         </div>
+        </>
     );
 };
 
