@@ -22,6 +22,7 @@ import Wishlist from './Carts/Whishlist.jsx';
 import ContactUs from './components/Contactus.js';
 import AdminPanel from './Admin/AdminPanel.jsx';
 import InventoryPage from './Admin/Inventory/InventoryPage.jsx';
+import AdminLogin from './Admin/AdminLogin.jsx';
 // import ProductdCard from './components/ProductCard.js';
 
 const App = () => {
@@ -49,6 +50,7 @@ const App = () => {
           <Route path="/Wishlist" element={<Wishlist/>} />
           <Route path="/admin" element={<AdminPanel/>} />
           <Route path="/admin/inven" element={<InventoryPage/>} />
+          <Route path='/Adminform' element={<AdminLogin/>}/>
 
 
 

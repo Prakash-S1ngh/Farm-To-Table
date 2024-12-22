@@ -13,6 +13,7 @@ import AllUsers from './AllUsers';
 import AllSuppliers from './AllSuppliers';
 import InventoryPage from './Inventory/InventoryPage';
 import AddItems from './Items/AddItems';
+import { useNavigate } from 'react-router-dom';
 // import AllUs from './AllUsers';
 
 const AdminPanel = () => {
@@ -62,6 +63,7 @@ const AdminPanel = () => {
         return <Dashboard/>;
     }
   };
+  const navigate = useNavigate();
 
   return (
     <div className="admin-panel">
@@ -85,6 +87,7 @@ const AdminPanel = () => {
             onClick={() => {
               // Implement logout logic here
               console.log('Logging out');
+              navigate('/');
             }}
           >
             <LogOut className="nav-icon" />
