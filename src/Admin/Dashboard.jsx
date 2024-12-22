@@ -1,27 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { 
-  TrendingUp, 
-  ShoppingCart, 
-  Users, 
-  Package, 
-  DollarSign, 
-  Tractor 
+import {
+  TrendingUp,
+  ShoppingCart,
+  Users,
+  Package,
+  DollarSign,
+  Tractor
 } from 'lucide-react';
 import './Dashboard.css';
-import { PieChart, Pie, Cell, ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Bar } from 'recharts';
+import { LineChart , PieChart, Pie, Cell, ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Bar } from 'recharts';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const [recentOrders, setRecentOrders] = useState([]);
   const [data, setData] = useState({
     profits: null,
-    totalProducts:null ,
+    totalProducts: null,
     totalOrders: null,
     totalCustomers: null,
-    change:null 
+    change: null
   });
-  const [categoryData, setCategoryData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false); // To control modal visibility
   const [currentChartType, setCurrentChartType] = useState(''); // To determine which chart to show in modal
 
@@ -41,36 +40,36 @@ const Dashboard = () => {
 
   const fetchTotalCustomers = async () => {
     try {
-        const response = await axios.get('http://localhost:4000/adminpanel/api/v2/gettotalCustomer', {
-            withCredentials: true
-        });
+      const response = await axios.get('http://localhost:4000/adminpanel/api/v2/gettotalCustomer', {
+        withCredentials: true
+      });
 
-        const { totalCustomers } = response.data;
+      const { totalCustomers } = response.data;
 
-        setData(prevState => ({ ...prevState, totalCustomers }));
+      setData(prevState => ({ ...prevState, totalCustomers }));
 
     } catch (error) {
-        console.error("Error fetching total customers:", error);
+      console.error("Error fetching total customers:", error);
     }
   };
 
   const fetchProfitData = async () => {
     try {
-        const response = await axios.get('http://localhost:4000/adminpanel/api/v2/getProfits', {
-            withCredentials: true
-        });
+      const response = await axios.get('http://localhost:4000/adminpanel/api/v2/getProfits', {
+        withCredentials: true
+      });
 
-        const { current_month_total_sum, previous_month_total_sum, profit_ratio, total_sum_of_all_products } = response.data;
+      const { current_month_total_sum, previous_month_total_sum, profit_ratio, total_sum_of_all_products } = response.data;
 
-        setData(prevState => ({
-            ...prevState,
-            profits: total_sum_of_all_products,
-            change: profit_ratio
+      setData(prevState => ({
+        ...prevState,
+        profits: total_sum_of_all_products,
+        change: profit_ratio
 
-        }));
+      }));
 
     } catch (error) {
-        console.error("Error fetching profit data:", error);
+      console.error("Error fetching profit data:", error);
     }
   };
 
@@ -98,13 +97,15 @@ const Dashboard = () => {
   };
 
   const [salesData, setSalesData] = useState([]);
-  
+  const [categoryData, setCategoryData] = useState([]);
+
+
   // Fetch Monthly Sales Data
   const fetchSalesData = async () => {
     try {
       const response = await axios.get('http://localhost:4000/adminpanel/api/v2/getSales');
       setSalesData(response.data);  // Assuming response.data is an array of sales data
-      console.log("sales distribution",salesData);
+      console.log("sales distribution", salesData);
     } catch (error) {
       console.error("Error fetching sales data:", error);
     }
@@ -113,11 +114,28 @@ const Dashboard = () => {
     try {
       const response = await axios.get('http://localhost:4000/adminpanel/api/v2/getProd');
       setCategoryData(response.data);  // Assuming response.data is an array for product categories
-      console.log("product distribution",categoryData[1]);
+      console.log("product distribution", categoryData[1]);
     } catch (error) {
       console.error("Error fetching category data:", error);
     }
   };
+  // const categoryData = [
+  //   { "category_id": "CAT5", "category_name": "Dairy", "product_count": 8 },
+  //   { "category_id": "CAT1", "category_name": "Fruits", "product_count": 14 },
+  //   { "category_id": "CAT6", "category_name": "Other", "product_count": 8 },
+  //   { "category_id": "CAT4", "category_name": "Special", "product_count": 8 },
+  //   { "category_id": "CAT3", "category_name": "Spices", "product_count": 11 },
+  //   { "category_id": "CAT2", "category_name": "Vegetables", "product_count": 10 }
+  // ];
+
+  // const salesData = [
+  //   { "order_date": "2024-11-07T18:30:00.000Z", "daily_sales": "1236.00", "orders_count": 3 },
+  //   { "order_date": "2024-11-08T18:30:00.000Z", "daily_sales": "3320.00", "orders_count": 2 },
+  //   { "order_date": "2024-11-09T18:30:00.000Z", "daily_sales": "638.00", "orders_count": 5 },
+  //   { "order_date": "2024-11-10T18:30:00.000Z", "daily_sales": "2776.00", "orders_count": 2 },
+  //   { "order_date": "2024-11-11T18:30:00.000Z", "daily_sales": "2142.30", "orders_count": 4 },
+  //   { "order_date": "2024-11-12T18:30:00.000Z", "daily_sales": "2844.76", "orders_count": 3 }
+  // ];
 
   // Open Modal Function
   const openModal = (chartType) => {
@@ -200,7 +218,7 @@ const Dashboard = () => {
       </div>
 
       {/* Sales and Product Category Analysis */}
-     {/* Sales and Product Category Analysis */}
+      {/* Sales and Category Analysis */}
       <div className="charts-grid">
         {/* Monthly Sales Chart */}
         <div className="chart-card" onClick={() => openModal('sales')}>
@@ -211,13 +229,13 @@ const Dashboard = () => {
             {salesData.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <ComposedChart data={salesData}>
-                  <XAxis dataKey="month" />
+                  <XAxis dataKey="order_date" />
                   <YAxis />
                   <Tooltip />
                   <Legend />
                   <CartesianGrid stroke="#f5f5f5" />
-                  <Bar dataKey="sales" barSize={20} fill="#413ea0" />
-                  <Line type="monotone" dataKey="growth" stroke="#ff7300" />
+                  <Bar dataKey="daily_sales" barSize={20} fill="#413ea0" />
+                  <Line type="monotone" dataKey="orders_count" stroke="#ff7300" />
                 </ComposedChart>
               </ResponsiveContainer>
             ) : (
@@ -234,13 +252,13 @@ const Dashboard = () => {
           <div className="chart-content">
             {categoryData.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie data={categoryData} dataKey="value" nameKey="name" outerRadius={80} fill="#8884d8" label>
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                </PieChart>
+                <LineChart data={categoryData}>
+                  <XAxis dataKey="category_name" />
+                  <YAxis />
+                  <Tooltip />
+                  <CartesianGrid stroke="#f5f5f5" />
+                  <Line type="monotone" dataKey="product_count" stroke="#8884d8" />
+                </LineChart>
               </ResponsiveContainer>
             ) : (
               <p>Loading category data...</p>
@@ -249,7 +267,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Modal Rendering */}
+      {/* Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -259,13 +277,13 @@ const Dashboard = () => {
                 <h2>Monthly Sales Trends - Full View</h2>
                 <ResponsiveContainer width="100%" height={400}>
                   <ComposedChart data={salesData}>
-                    <XAxis dataKey="month" />
+                    <XAxis dataKey="order_date" />
                     <YAxis />
                     <Tooltip />
                     <Legend />
                     <CartesianGrid stroke="#f5f5f5" />
-                    <Bar dataKey="sales" barSize={20} fill="#413ea0" />
-                    <Line type="monotone" dataKey="growth" stroke="#ff7300" />
+                    <Bar dataKey="daily_sales" barSize={20} fill="#413ea0" />
+                    <Line type="monotone" dataKey="orders_count" stroke="#ff7300" />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
@@ -274,19 +292,20 @@ const Dashboard = () => {
               <div className="modal-chart">
                 <h2>Product Category Distribution - Full View</h2>
                 <ResponsiveContainer width="100%" height={400}>
-                  <PieChart>
-                    <Pie data={categoryData} dataKey="value" nameKey="name" outerRadius={120} fill="#8884d8" label>
-                      {categoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                  </PieChart>
+                  <LineChart data={categoryData}>
+                    <XAxis dataKey="category_name" />
+                    <YAxis />
+                    <Tooltip />
+                    <CartesianGrid stroke="#f5f5f5" />
+                    <Line type="monotone" dataKey="product_count" stroke="#8884d8" />
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             )}
           </div>
         </div>
       )}
+
 
       {/* Recent Orders */}
       <div className="orders-card">

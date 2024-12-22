@@ -1,6 +1,7 @@
 const { connection, setupConnection } = require("../../config/database.config");
 const jwt = require('jsonwebtoken');
 
+
 exports.loginadmin = async (req, res) => {
     try {
         const { email, password } = req.body;
