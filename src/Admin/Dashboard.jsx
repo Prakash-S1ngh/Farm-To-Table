@@ -9,6 +9,8 @@ import {
   Tractor 
 } from 'lucide-react';
 import './Dashboard.css';
+import { PieChart, Pie, Cell, ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Bar } from 'recharts';
+import './Dashboard.css';
 
 const Dashboard = () => {
   const [recentOrders, setRecentOrders] = useState([]);
@@ -19,22 +21,9 @@ const Dashboard = () => {
     totalCustomers: null,
     change:null 
   });
-
-  const salesData = [
-    { month: 'Jan', sales: 4000 },
-    { month: 'Feb', sales: 3000 },
-    { month: 'Mar', sales: 5000 },
-    { month: 'Apr', sales: 4500 },
-    { month: 'May', sales: 6000 },
-    { month: 'Jun', sales: 5500 }
-  ];
-
-  const productCategoryData = [
-    { name: 'Seeds', value: 400 },
-    { name: 'Farm Tools', value: 300 },
-    { name: 'Fertilizers', value: 300 },
-    { name: 'Pesticides', value: 200 }
-  ];
+  const [categoryData, setCategoryData] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false); // To control modal visibility
+  const [currentChartType, setCurrentChartType] = useState(''); // To determine which chart to show in modal
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -108,11 +97,49 @@ const Dashboard = () => {
     }
   };
 
+  const [salesData, setSalesData] = useState([]);
+  
+  // Fetch Monthly Sales Data
+  const fetchSalesData = async () => {
+    try {
+      const response = await axios.get('http://localhost:4000/adminpanel/api/v2/getSales');
+      setSalesData(response.data);  // Assuming response.data is an array of sales data
+      console.log("sales distribution",salesData);
+    } catch (error) {
+      console.error("Error fetching sales data:", error);
+    }
+  };
+  const fetchCategoryData = async () => {
+    try {
+      const response = await axios.get('http://localhost:4000/adminpanel/api/v2/getProd');
+      setCategoryData(response.data);  // Assuming response.data is an array for product categories
+      console.log("product distribution",categoryData[1]);
+    } catch (error) {
+      console.error("Error fetching category data:", error);
+    }
+  };
+
+  // Open Modal Function
+  const openModal = (chartType) => {
+    setCurrentChartType(chartType);
+    setIsModalOpen(true);
+  };
+
+  // Close Modal Function
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setCurrentChartType('');
+  };
+
   useEffect(() => {
     fetchRecentOrders();
     fetchTotalCustomers();
     fetchProfitData();
     fetchTotalOrders();
+    fetchSalesData();
+    fetchCategoryData();
+
+
   }, []);
 
   return (
@@ -173,31 +200,93 @@ const Dashboard = () => {
       </div>
 
       {/* Sales and Product Category Analysis */}
+     {/* Sales and Product Category Analysis */}
       <div className="charts-grid">
         {/* Monthly Sales Chart */}
-        <div className="chart-card">
+        <div className="chart-card" onClick={() => openModal('sales')}>
           <div className="chart-header">
             <h2>Monthly Sales Trends</h2>
           </div>
           <div className="chart-content">
-            <div className="sales-chart-placeholder">
-              Sales Chart Placeholder
-            </div>
+            {salesData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <ComposedChart data={salesData}>
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <CartesianGrid stroke="#f5f5f5" />
+                  <Bar dataKey="sales" barSize={20} fill="#413ea0" />
+                  <Line type="monotone" dataKey="growth" stroke="#ff7300" />
+                </ComposedChart>
+              </ResponsiveContainer>
+            ) : (
+              <p>Loading sales data...</p>
+            )}
           </div>
         </div>
 
         {/* Product Category Distribution */}
-        <div className="chart-card">
+        <div className="chart-card" onClick={() => openModal('category')}>
           <div className="chart-header">
             <h2>Product Category Distribution</h2>
           </div>
           <div className="chart-content">
-            <div className="pie-chart-placeholder">
-              Product Category Chart Placeholder
-            </div>
+            {categoryData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={categoryData} dataKey="value" nameKey="name" outerRadius={80} fill="#8884d8" label>
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p>Loading category data...</p>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Modal Rendering */}
+      {isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button className="close-modal" onClick={closeModal}>×</button>
+            {currentChartType === 'sales' && salesData.length > 0 && (
+              <div className="modal-chart">
+                <h2>Monthly Sales Trends - Full View</h2>
+                <ResponsiveContainer width="100%" height={400}>
+                  <ComposedChart data={salesData}>
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <CartesianGrid stroke="#f5f5f5" />
+                    <Bar dataKey="sales" barSize={20} fill="#413ea0" />
+                    <Line type="monotone" dataKey="growth" stroke="#ff7300" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            {currentChartType === 'category' && categoryData.length > 0 && (
+              <div className="modal-chart">
+                <h2>Product Category Distribution - Full View</h2>
+                <ResponsiveContainer width="100%" height={400}>
+                  <PieChart>
+                    <Pie data={categoryData} dataKey="value" nameKey="name" outerRadius={120} fill="#8884d8" label>
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Recent Orders */}
       <div className="orders-card">

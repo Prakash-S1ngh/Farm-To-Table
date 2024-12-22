@@ -15,11 +15,12 @@ exports.loginadmin = async (req, res) => {
 
         // Query to find admin by email and password
         const query = 'SELECT * FROM admin WHERE email = ? AND password = ?';
-        const db = await connection;
+        const db = await setupConnection();
         const [result] = await db.execute(query, [email, password]);
+        console.log("rsult of admin",[result]);
 
         // Check if admin exists in the database
-        if (!result || result.length === 0) {
+        if (!result ) {
             return res.status(401).json({
                 success: false,
                 message: "Invalid email or password.",
@@ -763,6 +764,67 @@ exports.getRecentOrders = async (req, res) => {
     } catch (error) {
         console.error('Error fetching recent orders:', error);
         res.status(500).json({ message: 'Failed to fetch recent orders. Please try again later.' });
+    }
+};
+
+
+
+
+exports.getSalesChart = async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                DATE(order_date) AS order_date, 
+                SUM(total_amount) AS daily_sales, 
+                COUNT(order_id) AS orders_count 
+            FROM 
+                orders 
+            GROUP BY 
+                DATE(order_date) 
+            ORDER BY 
+                order_date ASC;
+        `;
+        const db = await setupConnection();
+
+        // Execute the query
+        const [results] = await db.execute(query);
+
+        // Respond with the results
+        res.status(200).json(results);
+    } catch (error) {
+        console.error("Error fetching sales data:", error);
+        res.status(500).json({ message: "Failed to fetch sales data." });
+    }
+};
+
+exports.getAllProductCategories = async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                c.category_id, 
+                c.category_name, 
+                COUNT(p.product_id) AS product_count
+            FROM 
+                Category c
+            LEFT JOIN 
+                Product p
+            ON 
+                c.category_id = p.category_id
+            GROUP BY 
+                c.category_id, c.category_name
+            ORDER BY 
+                c.category_name ASC;
+        `;
+
+        // Execute the query
+        const db = await setupConnection();
+        const [results] = await db.execute(query);
+
+        // Respond with the results
+        res.status(200).json(results);
+    } catch (error) {
+        console.error("Error fetching product categories:", error);
+        res.status(500).json({ message: "Failed to fetch product categories." });
     }
 };
 
