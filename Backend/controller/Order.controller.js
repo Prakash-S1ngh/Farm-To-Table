@@ -1,5 +1,5 @@
 const { query } = require("express");
-const setupConnection = require("../config/database.config");
+const {setupConnection} = require("../config/database.config");
 
 const getId = async (name) => {
   try {

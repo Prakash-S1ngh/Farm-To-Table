@@ -195,73 +195,50 @@ exports.loginFarmer = async (req, res) => {
     }
 }
 
-exports.AddressforFarmer = async (req, res) => {
+exports.updateFarmerprofile = async(req ,res)=>{
     try {
-        // Extract the farmer ID from the authenticated user's request
         const farmerId = req.Farmer.id;
-
-        // Extract address details from the request body
-        const { street, city, state, postal_code, country } = req.body;
-        console.log("address", street);
-        console.log("address", city);
-        console.log("address", state);
-        console.log("address", postal_code);
-        console.log("address", country);
-
-        // Validate that all required fields are present and not empty
-        if (!street || !city || !state || !postal_code || !country) {
+        const { first_name, last_name, email, phonenum ,street, city, state, postal_code, country} = req.body;
+        if(!first_name || !last_name || !email || !phonenum || !street || !city || !state || !postal_code || !country) {
             return res.status(400).json({
                 success: false,
-                message: "All address fields are required and cannot be empty"
+                message: "All fields are required"
             });
         }
-
-        // Generate a unique address ID
+        const db = await setupConnection();
         const address_id = `ADDR${Date.now()}`;
 
         // SQL query to insert the address into the Address table
         const query = 'INSERT INTO Address (address_id,farmer_id , street, state, city, postal_code, country) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        const db = await setupConnection();
 
         // Execute the insert query
         const [result] = await db.execute(query, [address_id, farmerId, street, state, city, postal_code, country]);
         console.log("address update ", result[0]);
-        // Check if the address was inserted successfully
-        if (result.affectedRows === 0) {
+
+        const query1 = 'UPDATE SUPPLIERS SET first_name = ?, last_name = ?, email = ?, phonenum = ?,address_id=? WHERE id = ?';
+        const [User] = await db.execute(query1, [first_name, last_name, email, phonenum,address_id, farmerId]);
+        if(User.affectedRows === 0) {
             return res.status(400).json({
                 success: false,
-                message: "An error occurred in adding the address"
+                message: "An error occurred while updating the farmer's profile"
             });
         }
-
-        // SQL query to update the supplier's address_id
-        const query2 = 'UPDATE suppliers SET address_id = ? WHERE id = ?'; // Corrected table name
-        const [result2] = await db.execute(query2, [address_id, farmerId]);
-
-        // Check if the update was successful
-        if (result2.affectedRows === 0) {
-            return res.status(400).json({
-                success: false,
-                message: "An error occurred while updating the farmer's address"
-            });
-        }
-
-        // Respond with success message
-        return res.status(201).json({
+        return res.status(200).json({
             success: true,
-            message: "Address added successfully"
+            message: "Farmer profile updated successfully",
+            farmer: {
+                id: farmerId,
+            }
         });
-
+        
     } catch (error) {
-        // Handle any errors that occur during the process
-        return res.status(400).json({
-            success: false,
-            message: "An error occurred while updating the farmer's address",
+        return res.status(500).json({
+            success:false,
+            message: "An error occurred while updating the farmer's profile",
             error: error.message
         });
     }
 }
-
 
 exports.getFarmer = async (req, res) => {
     const farmerId = req.Farmer;
@@ -489,6 +466,8 @@ exports.addproducts = async (req, res) => {
         });
     }
 };
+
+exports.getProducts = async (req, res) => {}
 
 
 exports.updateProduct = async (req, res) => {

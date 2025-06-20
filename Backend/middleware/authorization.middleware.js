@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const setupConnection = require('../config/database.config');
+const {setupConnection} = require('../config/database.config');
 require('dotenv').config();
 
 exports.authorization = async (req, res, next) => {
@@ -31,7 +31,10 @@ exports.authorization = async (req, res, next) => {
 
         // Assuming you're looking up the user from the Customer table, not OTP
         const query = 'SELECT * FROM Customer WHERE customer_id = ?';
+        console.log("Connection to db",setupConnection());
+
         const db = await setupConnection();
+
         const [result] = await db.execute(query, [customer_id]);
 
         if (result.length === 0) {

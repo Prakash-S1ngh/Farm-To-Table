@@ -1,0 +1,16 @@
+HOST=
+USER=
+pass=
+db=
+PORT_NUM=
+SECRET_KEY = 
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+
+cloudinary_cloud_name = 
+cloudinary_apiKey = 
+cloudinary_apiSecret = 
+
