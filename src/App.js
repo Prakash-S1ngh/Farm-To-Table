@@ -6,7 +6,7 @@ import Home from './components/Home.jsx';
 import Forgot from './Users/Password/Forgot.jsx';
 import ResetPassword from './Users/Password/ResetPassword.jsx';
 import UserContextProvider from './Users/Context/UserContextProvider'; // Import the provider
-import './App.css';
+// import './App.css';
 import Profile from './Users/Profile.jsx';
 import AddProduct from './Farmers/AddProduct.jsx';
 import FarmerProd from './Farmers/FarmerProd.jsx';
@@ -23,6 +23,7 @@ import ContactUs from './components/Contactus.js';
 import AdminPanel from './Admin/AdminPanel.jsx';
 import InventoryPage from './Admin/Inventory/InventoryPage.jsx';
 import AdminLogin from './Admin/AdminLogin.jsx';
+import ProductsQueue from './Farmers/ProductsQueue.jsx';
 // import ProductdCard from './components/ProductCard.js';
 
 const App = () => {
@@ -51,8 +52,7 @@ const App = () => {
           <Route path="/admin" element={<AdminPanel/>} />
           <Route path="/admin/inven" element={<InventoryPage/>} />
           <Route path='/Adminform' element={<AdminLogin/>}/>
-
-
+          <Route path='/productsqueue'  element={<ProductsQueue/>} />
 
         </Routes>
       </div>

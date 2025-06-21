@@ -36,12 +36,17 @@ const SignupForm = () => {
   };
 
   const handleImageChange = (e, isFarmer) => {
-    if (isFarmer) {
-      setFarmerData({ ...farmerData, image: e.target.files[0] });
-    } else {
-      setFormData({ ...formData, image: e.target.files[0] });
-    }
-  };
+  const selectedFile = e.target.files[0];
+  if (isFarmer) {
+    setFarmerData((prev) => ({ ...prev, image: selectedFile }));
+
+    console.log("Farmer selected image:", farmerData);
+  } else {
+    setFormData((prev) => ({ ...prev, image: selectedFile }));
+
+    console.log("User selected image:", selectedFile);
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -173,7 +178,6 @@ const SignupForm = () => {
             <input
               type="file"
               id="image"
-              accept="image/*"
               onChange={(e) => handleImageChange(e, !isUserSignup)} // Check if farmer
               required
               className="w-full border border-gray-300 rounded-md p-2"
