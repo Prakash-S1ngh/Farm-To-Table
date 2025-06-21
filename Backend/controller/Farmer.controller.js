@@ -71,6 +71,8 @@ exports.createFarmer = async (req, res) => {
         console.log("email", email);
         console.log("pass", pass);
         console.log("phonenum", phonenum);
+        console.log("imagePath", imagePath);
+        console.log("image",req.files);
         const password = pass;
         // Check if all required fields are provided
         if (!first_name || !last_name || !email || !password || !phonenum) {
@@ -195,34 +197,91 @@ exports.loginFarmer = async (req, res) => {
     }
 }
 
-exports.updateFarmerprofile = async(req ,res)=>{
+exports.updateFarmerprofile = async (req, res) => {
     try {
         const farmerId = req.Farmer.id;
-        const { first_name, last_name, email, phonenum ,street, city, state, postal_code, country} = req.body;
-        if(!first_name || !last_name || !email || !phonenum || !street || !city || !state || !postal_code || !country) {
+        const { firstName, lastName, email, phone, street, city, state, postalCode, country } = req.body;
+
+        // Log each field and its value
+        console.log("first_name:", firstName);
+        console.log("last_name:", lastName);
+        console.log("email:", email);
+        console.log("phonenum:", phone );
+        console.log("street:", street);
+        console.log("city:", city);
+        console.log("state:", state);
+        console.log("postal_code:", postalCode);
+        console.log("country:", country);
+
+        // Check if any required fields are missing
+        if (!firstName || !lastName || !email || !phone || !street || !city || !state || !postalCode || !country) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required"
             });
         }
+
         const db = await setupConnection();
-        const address_id = `ADDR${Date.now()}`;
 
-        // SQL query to insert the address into the Address table
-        const query = 'INSERT INTO Address (address_id,farmer_id , street, state, city, postal_code, country) VALUES (?, ?, ?, ?, ?, ?, ?)';
+        // STEP 1: Get existing address_id (if any) for this farmer
+        const [existingRows] = await db.execute(
+            'SELECT address_id FROM suppliers WHERE id = ?',
+            [farmerId]
+        );
+        const existingAddressId = existingRows.length > 0 ? existingRows[0].address_id : null;
+        console.log("Existing address_id:", existingAddressId);
+        let address_id;
 
-        // Execute the insert query
-        const [result] = await db.execute(query, [address_id, farmerId, street, state, city, postal_code, country]);
-        console.log("address update ", result[0]);
+        if (existingAddressId) {
+            // STEP 2: Update existing address
+            console.log("Updating existing address:", existingAddressId);
+            const updateQuery = `
+                UPDATE Address 
+                SET street = ?, state = ?, city = ?, postal_code = ?, country = ?
+                WHERE address_id = ?
+            `;
+            const [updateResult] = await db.execute(updateQuery, [street, state, city, postalCode, country, existingAddressId]);
+            
+            if (updateResult.affectedRows === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "An error occurred while updating the address."
+                });
+            }
+            address_id = existingAddressId;
 
-        const query1 = 'UPDATE SUPPLIERS SET first_name = ?, last_name = ?, email = ?, phonenum = ?,address_id=? WHERE id = ?';
-        const [User] = await db.execute(query1, [first_name, last_name, email, phonenum,address_id, farmerId]);
-        if(User.affectedRows === 0) {
+        } else {
+            // STEP 3: Create new address
+            address_id = `ADDR${Date.now()}`;
+            const insertQuery = `
+                INSERT INTO Address (address_id, farmer_id, street, state, city, postal_code, country) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `;
+            const [insertResult] = await db.execute(insertQuery, [address_id, farmerId, street, state, city, postalCode, country]);
+            
+            if (insertResult.affectedRows === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "An error occurred while creating the address."
+                });
+            }
+        }
+
+        // STEP 4: Update farmer profile
+        const farmerQuery = `
+            UPDATE suppliers 
+            SET first_name = ?, last_name = ?, email = ?, phonenum = ?, address_id = ? 
+            WHERE id = ?`;
+        const [userResult] = await db.execute(farmerQuery, [firstName, lastName, email, phone, address_id, farmerId]);
+
+        if (userResult.affectedRows === 0) {
             return res.status(400).json({
                 success: false,
-                message: "An error occurred while updating the farmer's profile"
+                message: "An error occurred while updating the farmer's profile."
             });
         }
+
+        // STEP 5: Done
         return res.status(200).json({
             success: true,
             message: "Farmer profile updated successfully",
@@ -230,15 +289,14 @@ exports.updateFarmerprofile = async(req ,res)=>{
                 id: farmerId,
             }
         });
-        
     } catch (error) {
         return res.status(500).json({
-            success:false,
+            success: false,
             message: "An error occurred while updating the farmer's profile",
             error: error.message
         });
     }
-}
+};
 
 exports.getFarmer = async (req, res) => {
     const farmerId = req.Farmer;
@@ -323,9 +381,6 @@ exports.getallproduct = async (req, res) => {
         });
     }
 };
-
-
-
 
 
 exports.getFarmerhistory = async (req, res) => {
@@ -467,149 +522,164 @@ exports.addproducts = async (req, res) => {
     }
 };
 
-exports.getProducts = async (req, res) => {}
+exports.getPendingProducts = async (req, res) => {
+    try {
+        const farmerId = req.Farmer.id;
+        const db = await setupConnection();
+        const query = 'SELECT * FROM farmproducts WHERE farmer_id = ?'
+        const [result] = await db.execute(query, [farmerId]);
+        if (result.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No pending products found for this farmer."
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Pending products fetched successfully.",
+            products: result
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "An error occurred while fetching pending products.",
+            error: error.message
+        });
+    }
+}
 
 
 exports.updateProduct = async (req, res) => {
-    try {
-        const farmer = req.Farmer; // Assuming you have the farmer data from authentication middleware
-        const { product_id, name, description, price, quantity , category_id , prodImage } = req.body;
-        const stock = quantity;
-        const created_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  try {
+    const farmer = req.Farmer; // farmer from auth middleware
+    const {
+      farmProducts_id,
+      product_name,
+      category_id,
+      quantity,
+      price,
+      status,
+      image = null,
+      description = null,
+    } = req.body.product;
+    console.log("The data in update product", req.body.product);
 
-        // Check if product_id is provided
-        console.log("Product ID:", product_id);
-        console.log("Name:", name);
-        console.log("Description:", description);
-        console.log("Price:", price);
-        console.log("Stock:", stock);
-        console.log("Category ID:", category_id);
-        console.log("Created At:", created_at);
-        console.log("Product Image URL:", prodImage);
-        
-
-        // Check if any of the required fields are missing
-        if (!product_id || !name || !description || !price || !stock || !category_id || !created_at || !prodImage) {
-            return res.status(400).json({
-                success: false,
-                message: "All fields are required. Please provide complete product details."
-            });
-        }
-
-        // Establish a connection to the database
-        const db = await setupConnection();
-
-        // Construct the SQL query to update the product
-        const updateProductQuery = `
-        UPDATE Product
-        SET
-          name = COALESCE(?, name),
-          description = COALESCE(?, description),
-          price = COALESCE(?, price),
-          stock = COALESCE(?, stock),
-          category_id = COALESCE(?, category_id),
-          created_at = COALESCE(?, created_at),
-          prodImage = COALESCE(?, prodImage)
-        WHERE product_id = ?;
-      `;
-
-        // Construct the SQL query to update the inventory
-        const updateInventoryQuery = `
-        UPDATE Inventory
-        SET
-          quantity = COALESCE(?, quantity),
-          price = COALESCE(?, price),
-          name = COALESCE(?, name),
-          description = COALESCE(?, description),
-          category_id = COALESCE(?, category_id),
-          prodImage = COALESCE(?, prodImage)
-        WHERE product_id = ? AND supplier_id = ?;
-      `;
-
-        // Parameters for the Product table update
-        const productParams = [
-            name,
-            description,
-            price,
-            stock,
-            category_id,
-            created_at,
-            prodImage,
-            product_id
-        ];
-
-        // Parameters for the Inventory table update
-        const inventoryParams = [
-            stock,
-            price,
-            name,
-            description,
-            category_id,
-            prodImage,
-            product_id,
-            farmer.id // Assuming farmer has an id property
-        ];
-
-        // Execute both queries using Promise.all for parallel execution
-        const [productResult, inventoryResult] = await Promise.all([
-            db.execute(updateProductQuery, productParams),
-            db.execute(updateInventoryQuery, inventoryParams)
-        ]);
-
-        // Check if any rows were affected
-        if (productResult[0].affectedRows === 0 && inventoryResult[0].affectedRows === 0) {
-            return res.status(404).json({ message: "Product not found or no changes made" });
-        }
-
-        // Send a success response
-        res.status(200).json({ message: "Product and inventory updated successfully" });
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ message: "Internal server error", error: error.message });
+    // Validate required fields
+    if (
+      !farmProducts_id ||
+      !product_name ||
+      !category_id ||
+      !quantity ||
+      !price ||
+      !status
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "All required fields must be provided.",
+      });
     }
+
+    const db = await setupConnection();
+
+    // Current date and time for date_added and time_added fields
+    const now = new Date();
+    const date_added = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const time_added = now.toTimeString().slice(0, 8); // HH:mm:ss
+
+    const updateQuery = `
+      UPDATE farmProducts
+      SET
+        product_name = ?,
+        category_id = ?,
+        quantity = ?,
+        price = ?,
+        image = COALESCE(?, image),
+        status = ?,
+        date_added = ?,
+        time_added = ?,
+        description = COALESCE(?, description)
+      WHERE farmProducts_id = ? AND farmer_id = ? AND status = 'Pending';
+    `;
+
+    const params = [
+      product_name,
+      category_id,
+      quantity,
+      price,
+      image,
+      status,
+      date_added,
+      time_added,
+      description,
+      farmProducts_id,
+      farmer.id,
+    ];
+
+    const [results] = await db.execute(updateQuery, params);
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found or cannot be updated (maybe already approved).",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Product updated successfully.",
+    });
+  } catch (error) {
+    console.error("Error updating farmProducts:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
 };
 
-
 exports.deleteProduct = async (req, res) => {
+  try {
+    const farmer = req.Farmer; // Farmer data from auth middleware
+    const { product_id } = req.params;
+    const farmProducts_id  = product_id;
+    console.log(req.params);
+
+    console.log('Farmer ID:', farmer.id);
+    console.log('Farm Product ID:', farmProducts_id);
+
+    const connection = await setupConnection();
+    await connection.beginTransaction();
+
     try {
-        const farmer = req.Farmer; // Assuming the farmer details are available in the request
-        const { product_id } = req.params;
-        
-        console.log('Farmer:', farmer); // Check farmer details
-        console.log('Product ID:', product_id); // Check product ID
-        
-        const connection = await setupConnection(); // Ensure connection setup is working
+      // ✅ Check if the farm product exists and belongs to this farmer
+      const [productCheck] = await connection.execute(
+        'SELECT * FROM farmProducts WHERE farmProducts_id = ? AND farmer_id = ?',
+        [farmProducts_id, farmer.id]
+      );
 
-        await connection.beginTransaction();
-        console.log("Transaction started");
+      if (productCheck.length === 0) {
+        await connection.rollback();
+        return res.status(404).json({ message: "Product not found or you are not authorized to delete this product." });
+      }
 
-        try {
-            const [productCheck] = await connection.execute(
-                'SELECT * FROM Product WHERE product_id = ?',
-                [product_id]
-            );
+      // ✅ Delete the record
+      await connection.execute('DELETE FROM farmProducts WHERE farmProducts_id = ? AND farmer_id = ?', [
+        farmProducts_id,
+        farmer.id
+      ]);
 
-            console.log("Product check result:", productCheck);
-            
-            if (productCheck.length === 0) {
-                await connection.rollback();
-                return res.status(404).json({ message: "Product not found or you are not authorized to delete this product." });
-            }
-
-            await connection.query('DELETE FROM inventory WHERE product_id = ?', [product_id]);
-            await connection.query('DELETE FROM Product WHERE product_id = ?', [product_id]);
-
-            await connection.commit();
-            res.status(200).json({ message: "Product and inventory entry deleted successfully." });
-        } catch (error) {
-            await connection.rollback();
-            console.error("Error in deletion:", error);
-            res.status(500).json({ message: "An error occurred while deleting the product." });
-        } finally {
-            connection.end(); // Close the connection for single connection setup
-        }
+      await connection.commit();
+      res.status(200).json({ message: "Product deleted successfully." });
     } catch (error) {
-        console.error("Error setting up connection:", error);
-        res.status(500).json({ message: "Error occurred during product deletion." });
+      await connection.rollback();
+      console.error("Error in deletion:", error);
+      res.status(500).json({ message: "An error occurred while deleting the product." });
+    } finally {
+      connection.end();
     }
+  } catch (error) {
+    console.error("Error setting up connection:", error);
+    res.status(500).json({ message: "Error occurred during product deletion." });
+  }
 };

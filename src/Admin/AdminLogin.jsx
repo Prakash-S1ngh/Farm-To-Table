@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import './AdminLogin.css';
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import prakash from '/Users/prakashsingh/Documents/FarmToTableProject/Farm-to-table/src/components/prakash.jpg';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const AdminLogin = () => {
         <div className="admin-login-box">
           <div className="admin-login-avatar">
             <img
-              src="https://via.placeholder.com/100"
+            src = {prakash}
               alt="Admin Avatar"
               className="avatar-img"
             />
