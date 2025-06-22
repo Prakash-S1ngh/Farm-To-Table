@@ -333,44 +333,59 @@ exports.getFarmer = async (req, res) => {
 exports.getallproduct = async (req, res) => {
     try {
         const query = `
-        SELECT 
-            name,
-            MAX(price) AS latest_price,  -- Get the latest price for each product name
-            GROUP_CONCAT(product_id) AS product_ids,  -- Combine product_ids as a comma-separated string
-            SUM(stock) AS total_stock,  -- Sum the stock for each product name
-            MAX(description) AS description,  -- Pick one description (could be the latest or any)
-            MAX(category_id) AS category_id,  -- Use the category of any product in the group
-            MAX(prodImage) AS prodImage  -- Use the image of any product in the group
-        FROM Product
-        GROUP BY name  -- Only group by name to combine all products with the same name
-        ORDER BY name;
-    `;
-    
+            SELECT 
+                p.name,
+                p.price,
+                p.description,
+                p.category_id,
+                p.prodImage,
+                p.product_id,
+                i.quantity,
+                i.supplier_id,
+                CONCAT(s.first_name, ' ', s.last_name) AS supplier_name
+            FROM Product p
+            INNER JOIN inventory i ON p.product_id = i.product_id
+            INNER JOIN suppliers s ON i.supplier_id = s.id
+            ORDER BY p.name;
+        `;
         const db = await setupConnection();
-        const [result] = await db.execute(query);
+        const [rows] = await db.execute(query);
 
-        if (result.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "No products found"
-            });
+        if (!rows.length) {
+            return res.status(404).json({ success: false, message: "No products found" });
         }
 
-        // Transform data into the desired structure
-        const groupedProducts = result.map(product => ({
-            name: product.name,
-            stock: product.total_stock,
-            price: product.latest_price,  // Latest price from the query
-            description: product.description,
-            category_id: product.category_id,
-            prodImage: product.prodImage,
-            product_ids: product.product_ids.split(','), // Split comma-separated product_ids into an array
-        }));
+        // Group by product name
+        const groupedProducts = {};
+        rows.forEach(row => {
+            if (!groupedProducts[row.name]) {
+                groupedProducts[row.name] = {
+                    name: row.name,
+                    price: Number(row.price),
+                    description: row.description,
+                    category_id: row.category_id,
+                    prodImage: row.prodImage,
+                    stock: 0,
+                    product_ids: []
+                };
+            }
 
-        return res.status(200).json({
+            groupedProducts[row.name].stock += row.quantity;
+
+            groupedProducts[row.name].product_ids.push({
+                product_id: row.product_id,
+                quantity: row.quantity,
+                supplier_id: row.supplier_id,
+                supplier_name: row.supplier_name
+            });
+        });
+
+        const result = Object.values(groupedProducts);
+
+        res.status(200).json({
             success: true,
             message: "Products fetched successfully",
-            products: groupedProducts
+            products: result
         });
     } catch (error) {
         console.error("Error fetching products:", error);

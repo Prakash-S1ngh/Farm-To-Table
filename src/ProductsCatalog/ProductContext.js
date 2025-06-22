@@ -85,6 +85,7 @@ export const ProductProvider = ({ children }) => {
         decrementQuantity,
         addToWishlist,
         removeFromWishlist,
+        setCartItems,
         loading,
         error,
       }}

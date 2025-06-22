@@ -51,6 +51,19 @@ body {
   margin: 0;
   padding: 0;
   color: #333;
+  background-image: url('./components/images/background.jpeg'); /* Path to your image */
+  background-attachment: fixed;            /* Enables parallax effect */
+  background-position: center;             /* Centers the image */
+  background-repeat: no-repeat;            /* Prevents repeating */
+  background-size: cover;               /* Fills the screen */
+}
+
+.parallax-section {
+  background-image: url('./components/images/background.jpeg');
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .app {

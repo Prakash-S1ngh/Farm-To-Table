@@ -10,14 +10,12 @@ import UserContextProvider from './Users/Context/UserContextProvider'; // Import
 import Profile from './Users/Profile.jsx';
 import AddProduct from './Farmers/AddProduct.jsx';
 import FarmerProd from './Farmers/FarmerProd.jsx';
-import Shop from './components/Shop.js';
 import AboutUs from './components/AboutUs.jsx';
 import ProductsCart from './ProductsCatalog/ProductsCart.jsx';
 import Cart from './Carts/Cart.jsx';
 import { ProductProvider } from './ProductsCatalog/ProductContext.js';
 import Payment from './Payment/Payment.jsx';
 import OrderHistory from './Users/OrderHistory.jsx';
-import Testimonials from './components/Testimonials.js';
 import Wishlist from './Carts/Whishlist.jsx';
 import ContactUs from './components/Contactus.js';
 import AdminPanel from './Admin/AdminPanel.jsx';
@@ -30,7 +28,7 @@ const App = () => {
   return (
     <UserContextProvider> {/* Wrapping the app with UserContextProvider */}
     <ProductProvider>
-      <div className="app">
+      <div className="app parallax-section">
         <Routes>
           <Route path='/' element={<Home/>}/>
           <Route path='/signin' element={<SignupForm />} />
