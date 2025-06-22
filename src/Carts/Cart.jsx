@@ -1,22 +1,125 @@
-import React, { useContext } from 'react';
-import { MinusIcon, PlusIcon, XIcon } from 'lucide-react';
-import './Cart.css';
-import Header from '../components/Header';
-import { ProductContext } from '../ProductsCatalog/ProductContext'; // Import the context
+import React, { useContext, useEffect, useState } from 'react';
+import { Minus, Plus, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import Header from '../components/Header';
+import { ProductContext } from '../ProductsCatalog/ProductContext';
 
 const Cart = () => {
-  // Access cart items and methods from ProductContext
-  const { cartItems, removeFromCart, incrementQuantity, decrementQuantity } = useContext(ProductContext);
+  const {
+    cartItems, // New items in context
+    removeFromCart,
+    incrementQuantity,
+    decrementQuantity,
+    setCartItems,
+  } = useContext(ProductContext);
 
-  // Calculate subtotal
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  const [currentItems, setCurrentItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isFetched, setIsFetched] = useState(false);
+
+  // 1️⃣ FETCH EXISTING CART ITEMS
+  const fetchCart = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get('http://localhost:4000/users/api/v2/getcart', {
+        withCredentials: true,
+      }); 
+      setCurrentItems(res.data.cartItems);
+      console.log('Fetched cart items from server:', res.data.cartItems);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+      setIsFetched(true);
+    }
   };
+  
+  useEffect(() => {
+    if (!isFetched) {
+      fetchCart();
+    }
+  }, [isFetched]);
 
-  // Construct the order_details array
-  const orderDetails = cartItems.map(item => ({
+  // 2️⃣ SYNC CONTEXT NEW ITEMS TO SERVER
+  useEffect(() => {
+    const createNewItems = async () => {
+      if (!isFetched || cartItems.length === 0) return;
+
+      try {
+        for (const item of cartItems) {
+          console.log("Creating cart for new item:", item);
+          
+          await axios.post(
+            'http://localhost:4000/users/api/v2/createcart',
+            {
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              prodImage: item.prodImage,
+              product_ids: item.product_ids,
+            },
+            { withCredentials: true }
+          );
+        }
+      } catch (error) {
+        console.error("Error creating cart:", error);
+      } finally {
+        // After creating new items, refetch cart
+        await fetchCart();
+        // Clear cartItems context as it's now saved
+        setCartItems([]);
+      }
+    };
+    createNewItems();
+  }, [cartItems, isFetched]);
+
+  const handleUpdateQuantity = async (product_id, quantity, price) => {
+    try {
+      await axios.patch(
+        'http://localhost:4000/users/api/v2/updateCart',
+        { product_id, quantity, price },
+        { withCredentials: true }
+      );
+      await fetchCart();
+    } catch (error) {
+      console.error(error);
+      alert('Error updating cart quantity!');
+    }
+  };
+  
+  const handleDecrement = async (item) => {
+    if (item.quantity > 1) {
+      decrementQuantity(item.product_id);
+      await handleUpdateQuantity(item.product_id, item.quantity - 1, item.price);
+    } else {
+      await handleDeleteItem(item.product_id);
+    }
+  };
+  
+  const handleIncrement = async (item) => {
+    incrementQuantity(item.product_id);
+    await handleUpdateQuantity(item.product_id, item.quantity + 1, item.price);
+  };
+  
+  const handleDeleteItem = async (product_id) => {
+    try {
+      await axios.delete('http://localhost:4000/users/api/v2/deletecart', {
+        data: { product_id },
+        withCredentials: true,
+      });
+      await fetchCart();
+      removeFromCart(product_id);
+    } catch (error) {
+      console.error(error);
+      alert('Error removing item from cart!');
+    }
+  };
+  
+  const calculateSubtotal = () =>
+    currentItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+  const orderDetails = currentItems.map((item) => ({
     product_id: item.product_id,
     name: item.name,
     price: item.price,
@@ -24,99 +127,117 @@ const Cart = () => {
     subtotal: item.price * item.quantity,
   }));
 
-  // Function to handle payment and order creation
   const paymentHandler = async () => {
     try {
-      // Prepare the data to send to the backend
       const cartData = {
         total_amount: calculateSubtotal(),
         order_details: orderDetails,
       };
-
-      // Send a request to the server to create an order
       const res = await axios.post('http://localhost:4000/users/api/v2/orders', cartData, {
-        withCredentials: true, // Send cookies for authentication if needed
+        withCredentials: true,
       });
-
-      // Log the response or handle the order creation success
-      console.log("The order is placed:", res.data);
-
-      // Redirect to a success page or update the UI
-      window.location.href = '/Payment'; // Alternatively, use history.push if using react-router
-
+      console.log('Order placed:', res.data);
+      window.location.href = '/Payment';
     } catch (error) {
-      // Handle errors
-      console.error("Error placing order:", error);
-      alert("Failed to place the order. Please try again.");
+      console.error(error);
+      alert('Failed to place the order. Try again.');
     }
   };
+  
+  const combinedItems = [...currentItems, ...cartItems]; // Will only be context new items until saved
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="cart-container">
-        <div className="cart-wrapper">
-          <h1 className="cart-title">My Shopping Cart</h1>
-
-          <div className="cart-content">
-            <div className="cart-items">
-              <div className="cart-headers">
-                <span>PRODUCT</span>
-                <span>PRICE</span>
-                <span>QUANTITY</span>
-                <span>SUBTOTAL</span>
+      <div className="max-w-6xl w-full mx-auto p-4 bg-white rounded shadow">
+        <h1 className="text-2xl font-bold text-center my-6">My Shopping Cart</h1>
+        {loading ? (
+          <div className="text-center mt-20 text-gray-500">Loading your cart...</div>
+        ) : combinedItems.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-4">
+              <div className="grid grid-cols-[3fr_1fr_2fr_1fr_40px] font-bold text-gray-600 border-b border-gray-300 pb-3 hidden md:grid">
+                <span>Product</span>
+                <span>Price</span>
+                <span>Quantity</span>
+                <span>Subtotal</span>
                 <span></span>
               </div>
-
-              {/* Render cart items */}
-              {cartItems.length > 0 ? (
-                cartItems.map((item, index) => (
-                  <div key={index} className="cart-item">
-                    <div className="product-info">
-                      <img src={item.prodImage} alt={item.name} className="product-image" />
-                      <span className="product-name">{item.name}</span>
-                    </div>
-                    <div className="product-price">Rs {item.price}</div>
-                    <div className="quantity-controls">
-                      <button className="quantity-btn" onClick={() => decrementQuantity(item.product_id)}>
-                        <MinusIcon size={16} />
-                      </button>
-                      <input type="text" value={item.quantity} className="quantity-input" readOnly />
-                      <button className="quantity-btn" onClick={() => incrementQuantity(item.product_id)}>
-                        <PlusIcon size={16} />
-                      </button>
-                    </div>
-                    <div className="subtotal">Rs {(item.price * item.quantity)}</div>
-                    <button className="remove-btn" onClick={() => removeFromCart(item.product_id)}>
-                      <XIcon size={16} />
+              {combinedItems.map((item) => (
+                <div
+                  key={item.product_id}
+                  className="grid grid-cols-1 md:grid-cols-[3fr_1fr_2fr_1fr_40px] items-center gap-3 border-b border-gray-100 py-4 relative"
+                >
+                  <div className="flex items-center space-x-3">
+                    <img src={item.prodImage} alt={item.name} className="w-20 h-20 object-cover rounded" />
+                    <span className="font-medium">{item.name}</span>
+                  </div>
+                  <span className="text-gray-600">Rs {item.price}</span>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      className="bg-gray-100 p-2 rounded hover:bg-gray-200"
+                      onClick={() => handleDecrement(item)}
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <input
+                      type="text"
+                      value={item.quantity}
+                      readOnly
+                      className="w-12 text-center border rounded"
+                    />
+                    <button
+                      className="bg-gray-100 p-2 rounded hover:bg-gray-200"
+                      onClick={() => handleIncrement(item)}
+                    >
+                      <Plus size={16} />
                     </button>
                   </div>
-                ))
-              ) : (
-                <p>Your cart is empty.</p>
-              )}
+                  <span className="font-medium">Rs {item.price * item.quantity}</span>
+                  <button
+                    className="text-red-500 hover:text-red-600"
+                    onClick={() => handleDeleteItem(item.product_id)}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              ))}
             </div>
 
-            <div className="cart-summary">
-              <h2>Cart Total</h2>
-              <div className="summary-row">
+            <div className="bg-gray-50 rounded p-4 space-y-4">
+              <h2 className="text-xl font-semibold">Cart Totals</h2>
+              <div className="flex justify-between">
                 <span>Subtotal:</span>
                 <span>Rs {calculateSubtotal().toFixed(2)}</span>
               </div>
-              <div className="summary-row">
+              <div className="flex justify-between">
                 <span>Shipping:</span>
                 <span>Free</span>
               </div>
-              <div className="summary-row total">
+              <div className="flex justify-between font-bold text-lg pt-3 border-t">
                 <span>Total:</span>
                 <span>Rs {calculateSubtotal().toFixed(2)}</span>
               </div>
-              <button className="checkout-btn" onClick={paymentHandler}>
-                <Link to="/Payment">Proceed to checkout</Link>
+              <button
+                className="w-full rounded bg-green-500 hover:bg-green-600 text-white py-3 mt-4 font-bold"
+                onClick={paymentHandler}
+              >
+                Proceed to Checkout
               </button>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="text-center mt-20">
+            <h2 className="text-2xl font-semibold">Your cart is empty</h2>
+            <p className="text-gray-600 mt-2">Looks like you haven’t added any products yet.</p>
+            <Link
+              to="/shop"
+              className="inline-block mt-4 rounded bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 font-bold"
+            >
+              Go to Shop
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
