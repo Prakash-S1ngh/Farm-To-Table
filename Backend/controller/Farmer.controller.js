@@ -3,13 +3,13 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { uploadOnCloudinary } = require('../config/cloudinary.config');
-const { setupConnection } = require('../config/database.config');
+const { default: pool } = require('../config/test.config');
 require('dotenv').config();
 
 
 async function getFarmerId() {
     try {
-        const db = await setupConnection(); // Ensure you have a connection
+        const db = pool; // Ensure you have a connection
 
         const query = 'SELECT count FROM counters WHERE name = ?';
         const [result] = await db.execute(query, ['farmnum']); // Pass 'farmnum' as a string
@@ -28,37 +28,37 @@ async function getFarmerId() {
     }
 }
 
-async function getproductnum() {
-    try {
-        const db = await setupConnection(); // Ensure you have a connection
+// async function getproductnum() {
+//     try {
+//         const db = await setupConnection(); // Ensure you have a connection
 
-        const query = 'SELECT count FROM counters WHERE name = ?';
-        const [result] = await db.execute(query, ['prodnum']); // Pass 'farmnum' as a string
+//         const query = 'SELECT count FROM counters WHERE name = ?';
+//         const [result] = await db.execute(query, ['prodnum']); // Pass 'farmnum' as a string
 
-        if (result.length === 0) {
-            throw new Error('Counter not found');
-        }
+//         if (result.length === 0) {
+//             throw new Error('Counter not found');
+//         }
 
-        let num = result[0].count; // Assuming the column is 'count'
-        num++;
-        await db.execute('UPDATE counters SET count = ? WHERE name = ?', [num, 'prodnum']);
-        return `PROD${num}`;
-    } catch (error) {
-        console.log("An error occured in generating prodnum", error.message);
-    }
-}
+//         let num = result[0].count; // Assuming the column is 'count'
+//         num++;
+//         await db.execute('UPDATE counters SET count = ? WHERE name = ?', [num, 'prodnum']);
+//         return `PROD${num}`;
+//     } catch (error) {
+//         console.log("An error occured in generating prodnum", error.message);
+//     }
+// }
 
-async function getCategoryId(name) {
-    try {
-        const db = await setupConnection(); // Establish the database connection
-        const query = 'SELECT * FROM Category WHERE category_id = ?';
-        const [rows] = await db.execute(query, [name]);
-        console.log(rows[0].category_id);
-        return rows[0].category_id;
-    } catch (error) {
-        console.log("An error occurred while fetching the category ID:", error.message);
-    }
-}
+// async function getCategoryId(name) {
+//     try {
+//         const db = await setupConnection(); // Establish the database connection
+//         const query = 'SELECT * FROM Category WHERE category_id = ?';
+//         const [rows] = await db.execute(query, [name]);
+//         console.log(rows[0].category_id);
+//         return rows[0].category_id;
+//     } catch (error) {
+//         console.log("An error occurred while fetching the category ID:", error.message);
+//     }
+// }
 
 
 exports.createFarmer = async (req, res) => {
@@ -66,13 +66,6 @@ exports.createFarmer = async (req, res) => {
         const { first_name, last_name, email, pass, phone } = req.body;
         const imagePath = req.file;
         const phonenum = phone;
-        console.log("first_name", first_name);
-        console.log("last_name", last_name);
-        console.log("email", email);
-        console.log("pass", pass);
-        console.log("phonenum", phonenum);
-        console.log("imagePath", imagePath);
-        console.log("image",req.files);
         const password = pass;
         // Check if all required fields are provided
         if (!first_name || !last_name || !email || !password || !phonenum) {
@@ -102,7 +95,7 @@ exports.createFarmer = async (req, res) => {
       INSERT INTO suppliers (id, phonenum, first_name, last_name, email, password, profileImage)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
-        const db = await setupConnection();
+        const db = pool;
         const [result] = await db.execute(query, [
             farmerId,
             phonenum,
@@ -155,7 +148,7 @@ exports.loginFarmer = async (req, res) => {
 
         // Correct SQL query syntax
         const query = 'SELECT * FROM suppliers WHERE email = ?';
-        const db = await setupConnection();
+        const db = pool;
         const [result] = await db.execute(query, [email]);
 
         // Check if the farmer exists
@@ -202,17 +195,6 @@ exports.updateFarmerprofile = async (req, res) => {
         const farmerId = req.Farmer.id;
         const { firstName, lastName, email, phone, street, city, state, postalCode, country } = req.body;
 
-        // Log each field and its value
-        console.log("first_name:", firstName);
-        console.log("last_name:", lastName);
-        console.log("email:", email);
-        console.log("phonenum:", phone );
-        console.log("street:", street);
-        console.log("city:", city);
-        console.log("state:", state);
-        console.log("postal_code:", postalCode);
-        console.log("country:", country);
-
         // Check if any required fields are missing
         if (!firstName || !lastName || !email || !phone || !street || !city || !state || !postalCode || !country) {
             return res.status(400).json({
@@ -221,7 +203,7 @@ exports.updateFarmerprofile = async (req, res) => {
             });
         }
 
-        const db = await setupConnection();
+        const db = pool;
 
         // STEP 1: Get existing address_id (if any) for this farmer
         const [existingRows] = await db.execute(
@@ -310,7 +292,7 @@ exports.getFarmer = async (req, res) => {
         LEFT JOIN Address a ON s.id = a.farmer_id
         WHERE s.id = ?;
       `;
-        const db = await setupConnection();
+        const db = pool;
         // Execute the query
         console.log(farmerId.id);
         const [rows] = await db.execute(query, [farmerId.id]);
@@ -348,7 +330,7 @@ exports.getallproduct = async (req, res) => {
             INNER JOIN suppliers s ON i.supplier_id = s.id
             ORDER BY p.name;
         `;
-        const db = await setupConnection();
+        const db = pool;
         const [rows] = await db.execute(query);
 
         if (!rows.length) {
@@ -403,7 +385,7 @@ exports.getFarmerhistory = async (req, res) => {
         const farmer = req.Farmer;
         console.log(farmer);
         const query = 'SELECT * FROM inventory WHERE supplier_id = ?';
-        const db = await setupConnection();
+        const db = pool;
         const result = await db.execute(query, [farmer.id]);
         if (result.length === 0) {
             return res.status(400).json({
@@ -451,7 +433,7 @@ exports.addproducts = async (req, res) => {
         const time_added = currentDate.toTimeString().split(' ')[0]; // Format: HH:MM:SS
 
         // Setup the database connection
-        const db = await setupConnection();
+        const db = pool;
 
         // Check if the product already exists for the same farmer and category
         const [existingProduct] = await db.query(
@@ -463,9 +445,6 @@ exports.addproducts = async (req, res) => {
             // Product exists, update it
             const product = existingProduct[0];
             const updatedQuantity = parseFloat(product.quantity) + parseFloat(quantity); // Add to existing quantity
-            console.log("quantity",updatedQuantity);
-            console.log("quantity",product.quantity);
-            console.log("quantity",parseInt(quantity));
             const updatedPrice = price; // You can also modify the price if needed
 
             // Update farmproducts table
@@ -475,9 +454,6 @@ exports.addproducts = async (req, res) => {
                 WHERE product_name = ? AND farmer_id = ?`,
                 [updatedQuantity, updatedPrice, imageUrl, date_added, time_added, name, farmer_id]
             );
-
-            // Log the update result
-            console.log("Updated farmproducts:", updateProductResult);
 
             // Update the corresponding record in Allfarmproducts table
             const total = updatedQuantity * updatedPrice; // Calculate the total value
@@ -540,7 +516,7 @@ exports.addproducts = async (req, res) => {
 exports.getPendingProducts = async (req, res) => {
     try {
         const farmerId = req.Farmer.id;
-        const db = await setupConnection();
+        const db = pool;
         const query = 'SELECT * FROM farmproducts WHERE farmer_id = ?'
         const [result] = await db.execute(query, [farmerId]);
         if (result.length === 0) {
@@ -594,7 +570,7 @@ exports.updateProduct = async (req, res) => {
       });
     }
 
-    const db = await setupConnection();
+    const db = pool;
 
     // Current date and time for date_added and time_added fields
     const now = new Date();
@@ -658,12 +634,8 @@ exports.deleteProduct = async (req, res) => {
     const farmer = req.Farmer; // Farmer data from auth middleware
     const { product_id } = req.params;
     const farmProducts_id  = product_id;
-    console.log(req.params);
 
-    console.log('Farmer ID:', farmer.id);
-    console.log('Farm Product ID:', farmProducts_id);
-
-    const connection = await setupConnection();
+    const connection = pool;
     await connection.beginTransaction();
 
     try {

@@ -22,7 +22,6 @@ async function setupConnection() {
     }
 }
 
-// Initialize the connection immediately when the module is imported
-setupConnection();
+
 
 module.exports = { setupConnection, connection };

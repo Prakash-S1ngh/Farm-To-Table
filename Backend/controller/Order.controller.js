@@ -1,10 +1,10 @@
 const { query } = require("express");
-const { setupConnection } = require("../config/database.config");
+const { default: pool } = require("../config/test.config");
 
 const getId = async (name) => {
   try {
     let query = 'SELECT count FROM counters WHERE name=?';
-    const db = await setupConnection();
+    const db = pool;
     const [result] = await db.execute(query, [name]);
 
     if (result.length === 0) {
@@ -48,7 +48,7 @@ exports.createOrder = async (req, res) => {
         VALUES (?, ?, ?, ?, ?)
       `;
 
-    const db = await setupConnection();
+    const db = pool;
     await db.execute(query, [newOrderId, customerId, orderDate, total_amount, orderStatus]);
 
     // Insert each order detail into the order_details table
@@ -95,7 +95,7 @@ exports.getOrders = async (req, res) => {
     const orderQuery = 'SELECT * FROM Orders WHERE customer_id=? ORDER BY order_id DESC'; // Orders by latest date first
 
     // Set up the database connection
-    const db = await setupConnection();
+    const db = pool;
 
     // Execute the query to get orders for the customer
     const [orderResult] = await db.execute(orderQuery, [user.customer_id]);
@@ -148,7 +148,7 @@ exports.createCart = async (req, res) => {
       return res.status(400).json({ message: "All fields are required, including product_ids array." });
     }
 
-    const db = await setupConnection();
+    const db = pool;
     let quantityLeft = quantity;
 
     for (const item of product_ids) {
@@ -209,7 +209,7 @@ exports.getCartItems = async (req, res) => {
     if (!user || !user.customer_id) {
       return res.status(400).json({ message: "Customer ID is missing or user is not authenticated" });
     }
-    const db = await setupConnection();
+    const db = pool;
     const [cartItems] = await db.query(
       "SELECT * FROM Cart WHERE customer_id = ?",
       [user.customer_id]
@@ -232,7 +232,7 @@ exports.updateCartItem = async (req, res) => {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    const db = await setupConnection();
+    const db = pool;
     const [existingItem] = await db.query(
       "SELECT quantity FROM Cart WHERE customer_id = ? AND product_id = ?",
       [customer_id, product_id]
@@ -259,7 +259,7 @@ exports.deleteCartItem = async (req, res) => {
     const { product_id } = req.body;
     const {customer_id} = req.user;
     
-    const db = await setupConnection();
+    const db = pool;
     const result = await db.query(
       "DELETE FROM Cart WHERE customer_id = ? AND product_id = ?",
       [customer_id, product_id]
@@ -272,6 +272,52 @@ exports.deleteCartItem = async (req, res) => {
     return res.status(200).json({ message: "Item removed from cart successfully" });
   } catch (error) {
     return res.status(500).json({ message: "Error deleting cart item", error: error.message });
+  }
+};
+
+//Wishlist functionality.
+
+exports.getWishlistController = async (req, res) => {
+  const { customer_id } = req.user; 
+  const db = pool;
+  try {
+    const [results] = await db.execute(
+      'SELECT * FROM Wishlist WHERE customer_id = ?',
+      [customer_id]
+    );
+    res.json({ wishlist: results });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching wishlist');
+  }
+};
+
+exports.addToWishlistController = async (req, res) => {
+  const { customer_id  } = req.user; 
+  const { items } = req.body; // Expecting items to be an array of objects
+  const db = pool;
+  try {
+    const values = items.map(item => [item.name, item.quantity || 1, customer_id, item.description || '' , item.prodImage || '' , item.price || 0]);
+    await db.query(
+      'INSERT INTO Wishlist (name, quantity, customer_id,prodImage, description,price) VALUES ?',
+      [values]
+    );
+    res.json({ message: 'Items added to wishlist' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error adding items to wishlist');
+  }
+};
+
+exports.deleteWishlistController = async (req, res) => {
+  const { id } = req.params;
+  const db = pool;
+  try {
+    await db.execute('DELETE FROM Wishlist WHERE id = ?', [id]);
+    res.json({ message: 'Item removed from wishlist' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error deleting item from wishlist');
   }
 };
 

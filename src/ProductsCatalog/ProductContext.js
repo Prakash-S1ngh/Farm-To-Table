@@ -62,9 +62,10 @@ export const ProductProvider = ({ children }) => {
   const addToWishlist = (product) => {
     setWishlist((prevWishlist) => {
       // Check if the product is already in the wishlist
-      if (prevWishlist.find((item) => item.product_id === product.product_id)) {
+      if (prevWishlist.find((item) => item.name === product.name && item.category_id === product.category_id)) {
         return prevWishlist; // Product already in wishlist, no need to add
       }
+      console.log('Adding to wishlist:', [...prevWishlist, product]);
       return [...prevWishlist, product];
     });
   };
@@ -88,6 +89,7 @@ export const ProductProvider = ({ children }) => {
         setCartItems,
         loading,
         error,
+        setWishlist
       }}
     >
       {children}
