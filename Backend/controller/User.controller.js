@@ -1,10 +1,10 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const {setupConnection} = require('../config/database.config');
 const { generateCustomerId, getCustomerCount } = require('../config/User.counter');
 const { mailsending } = require('../config/mailsending.config');
 const { uploadOnCloudinary } = require('../config/cloudinary.config');
+const { default: pool } = require('../config/test.config');
 require('dotenv').config();
 
 
@@ -31,7 +31,6 @@ exports.createUser = async (req, res) => {
       if (imagePath) {
           imgUrl = await uploadOnCloudinary(imagePath.path); // Upload and get the URL
       }
-      console.log("img ",imgUrl);
 
       // SQL query to insert data into the 'Customer' table
       const query = `INSERT INTO Customer (customer_id, first_name, last_name, email, password, phone, profile_image) 
@@ -40,7 +39,7 @@ exports.createUser = async (req, res) => {
       const password = hashedPassword;
 
       // Wait for the database connection
-      const db = await setupConnection();
+      const db = pool;
 
       // Execute the query using the db connection
       const [result] = await db.execute(query, [customer_id, first_name, last_name, email, password, phone, imgUrl]);
@@ -67,7 +66,7 @@ const createAddress = async () => {
         INSERT INTO Address (address_id, customer_id, street, city, state, postal_code, country)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `;
-        const db = await setupConnection();
+        const db = pool;
         // Execute the query
         await db.execute(query, [addressId, userId, street, city, state, postal_code, country]);
 
@@ -92,7 +91,7 @@ exports.loginUser = async (req, res) => {
         // SQL query to select the user by email
         const query = `SELECT * FROM Customer WHERE email = ?`;
 
-        const db = await setupConnection();
+        const db = pool;
         console.log("login ", db);
         const [result] = await db.execute(query, [email]);
 
@@ -149,7 +148,7 @@ exports.forgotpassword = async (req, res) => {
         }
 
         const query = 'SELECT * FROM Customer WHERE email = ?';
-        const db = await setupConnection();
+        const db = pool;
 
         const [user] = await db.execute(query, [email]);
         if (!user || user.length === 0) {
@@ -204,7 +203,7 @@ exports.validateOtp = async (req, res) => {
             });
         }
 
-        const db = await setupConnection();
+        const db = pool;
         const query = 'SELECT * FROM OTP WHERE CUST_ID = ?';
         const [result] = await db.execute(query, [user.customer_id]);
 
@@ -262,7 +261,7 @@ exports.getUser = async (req, res) => {
       WHERE c.customer_id = ?
     `;
 
-    const db = await setupConnection();
+    const db = pool;
     const [result] = await db.execute(query, [user.customer_id]);
 
     if (result.length === 0) {
@@ -308,7 +307,7 @@ exports.updateUser = async (req, res) => {
     const safeState = state ?? null;
     const safePostalCode = postalCode ?? 462003;
 
-    db = await setupConnection();
+    db = pool;
     await db.beginTransaction(); // Start a transaction
 
     // Update Customer table

@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const farmrouter = require('./router/Farmer.router');
 const adminrouter  = require('./Admin/Routes/User.router');
+const { setupConnection } = require('./config/database.config');
 require('dotenv').config();
 const app = express();
 
@@ -20,7 +21,7 @@ const corsOptions = {
   app.use(cors(corsOptions));
 
 // // Database Connection
-// const connection = setupConnection(); // Ensure you handle the connection properly
+setupConnection(); // Ensure you handle the connection properly
 
 app.get('/', (req, res) => {
     return res.send(`<h1>The server is running</h1>`);
