@@ -47,7 +47,7 @@ function Login() {
       setLoading(true); // Start spinner
       const res = await axios.post('http://localhost:4000/users/api/v2/login', logindata, {
         withCredentials: true,
-        headers: { 'Content-Type': 'application/json' }, // Adjust header for JSON
+         // Adjust header for JSON
       });
 
       if (res.status === 200) {
