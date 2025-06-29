@@ -358,15 +358,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
+- GitHub: [Prakash-S1ngh](https://github.com/Prakash-S1ngh)
 - LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-- Email: your.email@example.com
+- Email: prakashsingh.dev14@gmail.com
 
 ## 🙏 Acknowledgments
 
 - Thanks to all farmers who inspired this project
 - React and Node.js communities for excellent documentation
-- Open source contributors who made this possible
 
 ---
 
