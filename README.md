@@ -354,7 +354,7 @@ We welcome contributions! Please follow these steps:
 
 ## 👨‍💻 Author
 
-**Your Name**
+**Prakash Kumar Singh **
 - GitHub: [Prakash-S1ngh](https://github.com/Prakash-S1ngh)
 - LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
 - Email: prakashsingh.dev14@gmail.com
