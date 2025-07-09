@@ -30,7 +30,7 @@ exports.FarmerAuth = async (req, res, next) => {
 
         // Assuming you're looking up the user from the supplier table
         const query = 'SELECT * FROM suppliers WHERE id = ?';
-        const db = await setupConnection();
+        const db =  pool;
         const [result] = await db.execute(query, [id]);
 
         if (result.length === 0) {
@@ -41,7 +41,6 @@ exports.FarmerAuth = async (req, res, next) => {
         }
 
         req.Farmer = result[0]; // Attach the user object to the request for use in the next middleware
-        console.log("The farmer is ",req.Farmer);
         next(); // Proceed to the next middleware
 
     } catch (error) {

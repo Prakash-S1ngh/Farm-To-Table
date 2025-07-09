@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const {setupConnection} = require('../config/database.config');
+const { default: pool } = require('../config/test.config');
 require('dotenv').config();
 
 exports.authorization = async (req, res, next) => {
@@ -26,25 +27,10 @@ exports.authorization = async (req, res, next) => {
                 error:error.message
             });
         }
-
-        const { customer_id } = decoded;
-
-        // Assuming you're looking up the user from the Customer table, not OTP
-        const query = 'SELECT * FROM Customer WHERE customer_id = ?';
-        console.log("Connection to db",setupConnection());
-
-        const db = await setupConnection();
-
-        const [result] = await db.execute(query, [customer_id]);
-
-        if (result.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            });
-        }
-
-        req.user = result[0]; // Attach the user object to the request for use in the next middleware
+        
+        req.user = {
+            customer_id: decoded.customer_id
+        };
         next(); // Proceed to the next middleware
 
     } catch (error) {

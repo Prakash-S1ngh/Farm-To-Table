@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.7.7",
     "chart.js": "^4.4.7",
+    "docsify-cli": "^4.4.4",
     "express": "^4.21.0",
     "lucide-react": "^0.441.0",
     "mongoose": "^8.7.0",
