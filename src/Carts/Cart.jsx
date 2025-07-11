@@ -133,6 +133,7 @@ const Cart = () => {
         total_amount: calculateSubtotal(),
         order_details: orderDetails,
       };
+      //payment handler 
       const res = await axios.post('http://localhost:4000/users/api/v2/orders', cartData, {
         withCredentials: true,
       });

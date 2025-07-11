@@ -5,6 +5,7 @@ const cors = require('cors');
 const farmrouter = require('./router/Farmer.router');
 const adminrouter  = require('./Admin/Routes/User.router');
 const { setupConnection } = require('./config/database.config');
+const Paymentrouter = require('./router/Payment.router');
 require('dotenv').config();
 const app = express();
 
@@ -30,6 +31,7 @@ app.get('/', (req, res) => {
 app.use('/users/api/v2', router);
 app.use('/farmers/api/v2',farmrouter);
 app.use('/adminpanel/api/v2',adminrouter);
+app.use('/payment/api/v2',Paymentrouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
