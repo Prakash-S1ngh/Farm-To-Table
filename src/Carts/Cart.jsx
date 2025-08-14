@@ -57,7 +57,6 @@ const Cart = () => {
               quantity: item.quantity,
               price: item.price,
               prodImage: item.prodImage,
-              product_ids: item.product_ids,
             },
             { withCredentials: true }
           );
@@ -74,11 +73,11 @@ const Cart = () => {
     createNewItems();
   }, [cartItems, isFetched]);
 
-  const handleUpdateQuantity = async (product_id, quantity, price) => {
+  const handleUpdateQuantity = async (name, quantity, price) => {
     try {
       await axios.patch(
         'http://localhost:4000/users/api/v2/updateCart',
-        { product_id, quantity, price },
+        { name, quantity, price },
         { withCredentials: true }
       );
       await fetchCart();
@@ -90,26 +89,25 @@ const Cart = () => {
   
   const handleDecrement = async (item) => {
     if (item.quantity > 1) {
-      decrementQuantity(item.product_id);
-      await handleUpdateQuantity(item.product_id, item.quantity - 1, item.price);
+      decrementQuantity(item.name);
+      await handleUpdateQuantity(item.name, item.quantity - 1, item.price);
     } else {
-      await handleDeleteItem(item.product_id);
+      await handleDeleteItem(item.name);
     }
   };
   
   const handleIncrement = async (item) => {
-    incrementQuantity(item.product_id);
-    await handleUpdateQuantity(item.product_id, item.quantity + 1, item.price);
+    incrementQuantity(item.name);
+    await handleUpdateQuantity(item.name, item.quantity + 1, item.price);
   };
   
-  const handleDeleteItem = async (product_id) => {
+  const handleDeleteItem = async (name) => {
     try {
-      await axios.delete('http://localhost:4000/users/api/v2/deletecart', {
-        data: { product_id },
+      await axios.delete(`http://localhost:4000/users/api/v2/deletecart/${name}`, {
         withCredentials: true,
       });
       await fetchCart();
-      removeFromCart(product_id);
+      removeFromCart(name);
     } catch (error) {
       console.error(error);
       alert('Error removing item from cart!');
@@ -120,7 +118,6 @@ const Cart = () => {
     currentItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const orderDetails = currentItems.map((item) => ({
-    product_id: item.product_id,
     name: item.name,
     price: item.price,
     quantity: item.quantity,
@@ -129,19 +126,52 @@ const Cart = () => {
 
   const paymentHandler = async () => {
     try {
+      if (currentItems.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
+
       const cartData = {
         total_amount: calculateSubtotal(),
         order_details: orderDetails,
       };
-      //payment handler 
-      const res = await axios.post('http://localhost:4000/users/api/v2/orders', cartData, {
+
+      console.log('Placing order with data:', cartData);
+
+      // Create the order
+      const orderResponse = await axios.post('http://localhost:4000/users/api/v2/orders', cartData, {
         withCredentials: true,
       });
-      console.log('Order placed:', res.data);
-      window.location.href = '/Payment';
+
+      console.log('Order placed successfully:', orderResponse.data);
+
+      if (orderResponse.data.success) {
+        // Clear cart context
+        setCartItems([]);
+        
+        // Clear server cart
+        await axios.delete('http://localhost:4000/users/api/v2/clear-cart', {
+          withCredentials: true,
+        });
+
+        // Fetch updated cart
+        await fetchCart();
+
+        // Store order details in localStorage for payment page
+        localStorage.setItem('currentOrder', JSON.stringify({
+          orderId: orderResponse.data.orderId,
+          totalAmount: cartData.total_amount,
+          orderDetails: cartData.order_details
+        }));
+
+        // Redirect to payment page
+        window.location.href = '/Payment';
+      } else {
+        alert('Failed to place order: ' + orderResponse.data.message);
+      }
     } catch (error) {
-      console.error(error);
-      alert('Failed to place the order. Try again.');
+      console.error('Error placing order:', error);
+      alert('Failed to place the order. Please try again.');
     }
   };
   
@@ -166,7 +196,7 @@ const Cart = () => {
               </div>
               {combinedItems.map((item) => (
                 <div
-                  key={item.product_id}
+                  key={item.name}
                   className="grid grid-cols-1 md:grid-cols-[3fr_1fr_2fr_1fr_40px] items-center gap-3 border-b border-gray-100 py-4 relative"
                 >
                   <div className="flex items-center space-x-3">
@@ -197,7 +227,7 @@ const Cart = () => {
                   <span className="font-medium">Rs {item.price * item.quantity}</span>
                   <button
                     className="text-red-500 hover:text-red-600"
-                    onClick={() => handleDeleteItem(item.product_id)}
+                    onClick={() => handleDeleteItem(item.name)}
                   >
                     <X size={18} />
                   </button>

@@ -44,16 +44,29 @@
   }
   
   .contact-us-form input,
-  .contact-us-form textarea {
+  .contact-us-form textarea,
+  .contact-us-form select {
     padding: 0.8rem;
     border: 1px solid #ddd;
     border-radius: 4px;
     margin-bottom: 1rem;
+    font-size: 1rem;
   }
   
   .contact-us-form textarea {
     height: 150px;
     resize: vertical;
+  }
+  
+  .contact-us-form select {
+    background-color: white;
+    cursor: pointer;
+  }
+  
+  .contact-us-form select:focus {
+    outline: none;
+    border-color: #4dab3f;
+    box-shadow: 0 0 0 2px rgba(77, 171, 63, 0.2);
   }
   
   .contact-us-form button {
@@ -68,6 +81,43 @@
   
   .contact-us-form button:hover {
     background-color: #034e1e;
+  }
+  
+  .contact-us-form button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .alert {
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+  
+  .alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+  
+  .alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .contact-us {
+      flex-direction: column;
+      padding: 1rem;
+    }
+    
+    .contact-us-form {
+      margin: 0;
+      max-width: 100%;
+    }
   }
    
 

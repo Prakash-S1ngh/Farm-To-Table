@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const {setupConnection} = require('../config/database.config');
+const { pool } = require('../config/database.config');
 require('dotenv').config();
 
 exports.FarmerAuth = async (req, res, next) => {

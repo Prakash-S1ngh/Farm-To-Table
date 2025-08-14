@@ -1,9 +1,8 @@
-const mysql = require('mysql2/promise'); // Assuming you're using mysql2
-const setupConnection = require('./database.config');
+const { pool } = require('./database.config');
 
 exports.generateCustomerId = async ()=> {
     // Create a database connection
-    const db = await setupConnection();
+    const db = pool;
 
     // SQL query to increment the count for 'custnum'
     const updateCountQuery = `

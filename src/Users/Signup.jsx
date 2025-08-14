@@ -19,7 +19,6 @@ const SignupForm = () => {
     email: '',
     pass: '',
     phone: '',
-    account_details: '',
     image: null, // Add image field for farmer
   });
 
@@ -38,13 +37,17 @@ const SignupForm = () => {
   const handleImageChange = (e, isFarmer) => {
   const selectedFile = e.target.files[0];
   if (isFarmer) {
-    setFarmerData((prev) => ({ ...prev, image: selectedFile }));
-
-    console.log("Farmer selected image:", farmerData);
+    setFarmerData((prev) => {
+      const updatedData = { ...prev, image: selectedFile };
+      console.log("Farmer selected image:", updatedData);
+      return updatedData;
+    });
   } else {
-    setFormData((prev) => ({ ...prev, image: selectedFile }));
-
-    console.log("User selected image:", selectedFile);
+    setFormData((prev) => {
+      const updatedData = { ...prev, image: selectedFile };
+      console.log("User selected image:", updatedData);
+      return updatedData;
+    });
   }
 };
 
@@ -52,29 +55,53 @@ const SignupForm = () => {
     e.preventDefault();
     try {
       setLoading(true); // Start spinner
+      
+      // Validate that image is selected
+      const data = isUserSignup ? formData : farmerData;
+      if (!data.image) {
+        alert('Please select an image');
+        setLoading(false);
+        return;
+      }
+      
       const url = isUserSignup
         ? 'http://localhost:4000/users/api/v2/createUser'
         : 'http://localhost:4000/farmers/api/v2/createFarmer';
-      const data = isUserSignup ? formData : farmerData;
 
       // Prepare form data for image upload
       const formDataToSubmit = new FormData();
       for (const key in data) {
-        formDataToSubmit.append(key, data[key]);
+        if (data[key] !== null) { // Only append non-null values
+          formDataToSubmit.append(key, data[key]);
+        }
       }
 
-      console.log("data of farmer ",farmerData);
-      console.log(isUserSignup);
+      console.log("Form data being submitted:", data);
+      console.log("Is user signup:", isUserSignup);
+      console.log("FormData entries:");
+      for (let [key, value] of formDataToSubmit.entries()) {
+        console.log(key, value);
+      }
       
 
+      console.log("Submitting to URL:", url);
       const res = await axios.post(url, formDataToSubmit, {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      console.log(res);
-      if (res.status === 200) window.location.href = '/login'; // Redirect on success
+      console.log("Response received:", res);
+      if (res.status === 200 || res.status === 201) {
+        alert('Signup successful!');
+        window.location.href = '/login'; // Redirect on success
+      }
     } catch (error) {
       console.log("An error occurred in signup page", error);
+      if (error.response) {
+        console.log("Error response:", error.response.data);
+        alert(`Signup failed: ${error.response.data.message || 'Unknown error'}`);
+      } else {
+        alert('Signup failed: Network error');
+      }
     } finally {
       setLoading(false); // Stop spinner
     }
@@ -178,6 +205,8 @@ const SignupForm = () => {
             <input
               type="file"
               id="image"
+              name="image"
+              accept="image/*"
               onChange={(e) => handleImageChange(e, !isUserSignup)} // Check if farmer
               required
               className="w-full border border-gray-300 rounded-md p-2"

@@ -5,6 +5,7 @@ import {
   Tractor, 
   Package, 
   PlusSquare, 
+  MessageSquare,
   LogOut 
 } from 'lucide-react';
 import './AdminPanel.css'; 
@@ -13,6 +14,7 @@ import AllUsers from './AllUsers';
 import AllSuppliers from './AllSuppliers';
 import InventoryPage from './Inventory/InventoryPage';
 import AddItems from './Items/AddItems';
+import ContactManagement from './ContactManagement';
 import { useNavigate } from 'react-router-dom';
 // import AllUs from './AllUsers';
 
@@ -44,6 +46,11 @@ const AdminPanel = () => {
       icon: <PlusSquare className="nav-icon" />, 
       label: 'New Items', 
       key: 'newitems' 
+    },
+    { 
+      icon: <MessageSquare className="nav-icon" />, 
+      label: 'Contact Messages', 
+      key: 'contact' 
     }
   ];
 
@@ -59,6 +66,8 @@ const AdminPanel = () => {
         return <InventoryPage/>;
       case 'newitems':
         return <AddItems/>;
+      case 'contact':
+        return <ContactManagement/>;
       default:
         return <Dashboard/>;
     }

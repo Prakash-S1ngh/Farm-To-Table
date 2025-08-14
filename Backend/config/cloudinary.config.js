@@ -10,6 +10,13 @@ cloudinary.config({
 
 exports.uploadOnCloudinary = async (imagePath, option = {}) => {
   try {
+    console.log("Starting Cloudinary upload for:", imagePath);
+    console.log("Cloudinary config:", {
+      cloud_name: process.env.cloudinary_cloud_name,
+      api_key: process.env.cloudinary_apiKey ? 'Set' : 'Not set',
+      api_secret: process.env.cloudinary_apiSecret ? 'Set' : 'Not set'
+    });
+    
     // Merge user-specified options with default options for user display pictures
     const uploadOptions = {
       folder: 'FarmTotable/Users',
@@ -22,6 +29,13 @@ exports.uploadOnCloudinary = async (imagePath, option = {}) => {
       ...option 
     };
 
+    // Check if file exists
+    const fs = require('fs');
+    if (!fs.existsSync(imagePath)) {
+      throw new Error(`File does not exist: ${imagePath}`);
+    }
+    console.log("File exists, proceeding with upload");
+    
     // Upload image to Cloudinary
     const result = await cloudinary.uploader.upload(imagePath, uploadOptions);
     console.log("The image is uploaded on Cloudinary:", result.url);

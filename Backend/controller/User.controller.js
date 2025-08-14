@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const { generateCustomerId, getCustomerCount } = require('../config/User.counter');
 const { mailsending } = require('../config/mailsending.config');
 const { uploadOnCloudinary } = require('../config/cloudinary.config');
-const { default: pool } = require('../config/test.config');
+const { pool } = require('../config/database.config');
 require('dotenv').config();
 
 
@@ -288,7 +288,6 @@ exports.getUser = async (req, res) => {
 
 
 exports.updateUser = async (req, res) => {
-  let db;
   try {
     const user = req.user;
     const { firstName, lastName, email, phone, profile_image, street, city, country, state, postalCode } = req.body;
@@ -311,9 +310,6 @@ exports.updateUser = async (req, res) => {
     const safeState = state ?? null;
     const safePostalCode = postalCode ?? 462003;
 
-    db = pool;
-    await db.beginTransaction(); // Start a transaction
-
     // Update Customer table
     const updateCustomerQuery = `
       UPDATE Customer 
@@ -325,11 +321,11 @@ exports.updateUser = async (req, res) => {
         profile_image = COALESCE(?, profile_image)
       WHERE customer_id = ?
     `;
-    await db.execute(updateCustomerQuery, [safeFirstName, safeLastName, safeEmail, safePhone, profileImage, user.customer_id]);
+    await pool.execute(updateCustomerQuery, [safeFirstName, safeLastName, safeEmail, safePhone, profileImage, user.customer_id]);
 
     // Check if the address exists for the user
     const checkAddressQuery = `SELECT * FROM Address WHERE customer_id = ?`;
-    const [addressRows] = await db.execute(checkAddressQuery, [user.customer_id]);
+    const [addressRows] = await pool.execute(checkAddressQuery, [user.customer_id]);
 
     if (addressRows.length > 0) {
       // Address exists, so update it
@@ -343,7 +339,7 @@ exports.updateUser = async (req, res) => {
           postal_code = COALESCE(?, postal_code)
         WHERE customer_id = ?
       `;
-      await db.execute(updateAddressQuery, [safeStreet, safeCity, safeCountry, safeState, safePostalCode, user.customer_id]);
+      await pool.execute(updateAddressQuery, [safeStreet, safeCity, safeCountry, safeState, safePostalCode, user.customer_id]);
     } else {
       // Address does not exist, so create it
       const addressId = `ADDR${Date.now()}`; // Generate a unique address ID
@@ -351,18 +347,13 @@ exports.updateUser = async (req, res) => {
         INSERT INTO Address (address_id, customer_id, street, city, state, postal_code, country)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `;
-      await db.execute(createAddressQuery, [addressId, user.customer_id, safeStreet, safeCity, safeState, safePostalCode, safeCountry]);
+      await pool.execute(createAddressQuery, [addressId, user.customer_id, safeStreet, safeCity, safeState, safePostalCode, safeCountry]);
     }
-
-    await db.commit(); // Commit the transaction
 
     return res.status(200).json({
       message: "User and address data updated successfully",
     });
   } catch (error) {
-    if (db) {
-      await db.rollback(); // Rollback the transaction on error
-    }
     console.error("Error occurred while updating the user data:", error);
     return res.status(500).json({
       message: "Error occurred while updating the user data",

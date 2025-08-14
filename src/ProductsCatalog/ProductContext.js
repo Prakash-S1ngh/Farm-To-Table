@@ -34,24 +34,24 @@ export const ProductProvider = ({ children }) => {
     setCartItems((prevItems) => [...prevItems, { ...product, quantity: 1 }]);
   };
 
-  const removeFromCart = (id) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.product_id !== id));
+  const removeFromCart = (name) => {
+    setCartItems((prevItems) => prevItems.filter((item) => item.name !== name));
   };
 
-  const incrementQuantity = (id) => {
+  const incrementQuantity = (name) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.product_id === id && item.quantity < item.stock
+        item.name === name && item.quantity < (item.stock || 999)
           ? { ...item, quantity: item.quantity + 1 }
           : item
       )
     );
   };
 
-  const decrementQuantity = (id) => {
+  const decrementQuantity = (name) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.product_id === id && item.quantity > 1
+        item.name === name && item.quantity > 1
           ? { ...item, quantity: item.quantity - 1 }
           : item
       )
@@ -70,8 +70,8 @@ export const ProductProvider = ({ children }) => {
     });
   };
 
-  const removeFromWishlist = (id) => {
-    setWishlist((prevWishlist) => prevWishlist.filter((item) => item.product_id !== id));
+  const removeFromWishlist = (name) => {
+    setWishlist((prevWishlist) => prevWishlist.filter((item) => item.name !== name));
   };
 
   return (

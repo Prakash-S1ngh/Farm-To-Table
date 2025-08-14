@@ -4,8 +4,9 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const farmrouter = require('./router/Farmer.router');
 const adminrouter  = require('./Admin/Routes/User.router');
-const { setupConnection } = require('./config/database.config');
+const { pool } = require('./config/database.config');
 const Paymentrouter = require('./router/Payment.router');
+const contactRouter = require('./router/Contact.router');
 require('dotenv').config();
 const app = express();
 
@@ -18,11 +19,11 @@ const corsOptions = {
     origin: 'http://localhost:3000', // Specify the frontend's origin
     credentials: true, // Allow credentials (cookies, etc.)
   };
-  
   app.use(cors(corsOptions));
 
-// // Database Connection
-setupConnection(); // Ensure you handle the connection properly
+// Database Connection Pool
+// The pool is automatically initialized when the module is imported
+console.log('Database connection pool initialized');
 
 app.get('/', (req, res) => {
     return res.send(`<h1>The server is running</h1>`);
@@ -32,6 +33,7 @@ app.use('/users/api/v2', router);
 app.use('/farmers/api/v2',farmrouter);
 app.use('/adminpanel/api/v2',adminrouter);
 app.use('/payment/api/v2',Paymentrouter);
+app.use('/contact/api/v2', contactRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

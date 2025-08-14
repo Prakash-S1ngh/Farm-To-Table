@@ -15,58 +15,104 @@ const Wishlist = () => {
     setWishlist, // context setter
   } = useContext(ProductContext);
   const [currWishlist, setCurrWishlist] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading true
 
-  // ✅ Main Effect
+  // ✅ Initial fetch on component mount
   useEffect(() => {
-    const fetchAndSyncWishlist = async () => {
+    const fetchInitialWishlist = async () => {
       try {
         setLoading(true);
-        if (wishlist.length > 0) {
-          // 1️⃣ First save the in-memory wishlist to the database
-          await axios.post(`${api}/createwishlist`, { items: wishlist }, { withCredentials: true });
-        }
-
-        // 2️⃣ Then fetch the updated wishlist from the database
+        console.log('Fetching initial wishlist...');
         const res = await axios.get(`${api}/wishlist`, { withCredentials: true });
-        console.log('Fetched wishlist from server:', res.data.wishlist);
-        setCurrWishlist(res.data.wishlist || []);
-        console.log('Current wishlist:', currWishlist);
-
-        // 3️⃣ Clear the in-memory wishlist now that it's saved
-        setWishlist([]);
+        console.log('Initial wishlist response:', res.data);
+        
+        const fetchedWishlist = res.data.wishlist || [];
+        console.log('Setting initial wishlist to:', fetchedWishlist);
+        setCurrWishlist(fetchedWishlist);
       } catch (error) {
-        console.error(error);
-        toast.error('Error syncing wishlist!');
+        console.error('Error fetching initial wishlist:', error);
+        toast.error(`Error fetching wishlist: ${error.response?.data?.message || error.message}`);
       } finally {
         setLoading(false);
       }
     };
-    fetchAndSyncWishlist();
-  }, [wishlist, setWishlist]);
+    
+    fetchInitialWishlist();
+  }, []); // Only run on mount
+
+  // ✅ Sync wishlist when context wishlist has items
+  useEffect(() => {
+    const syncWishlist = async () => {
+      if (wishlist.length === 0) return; // Don't sync if no items
+      
+      try {
+        console.log('Syncing in-memory wishlist to database:', wishlist);
+        const saveResponse = await axios.post(`${api}/createwishlist`, { items: wishlist }, { withCredentials: true });
+        console.log('Save response:', saveResponse.data);
+
+        // Fetch updated wishlist after saving
+        const res = await axios.get(`${api}/wishlist`, { withCredentials: true });
+        console.log('Updated wishlist response after sync:', res.data);
+        
+        const fetchedWishlist = res.data.wishlist || [];
+        setCurrWishlist(fetchedWishlist);
+
+        // Clear the in-memory wishlist now that it's saved
+        setWishlist([]);
+        toast.success('Wishlist updated successfully!');
+      } catch (error) {
+        console.error('Error syncing wishlist:', error);
+        toast.error(`Error syncing wishlist: ${error.response?.data?.message || error.message}`);
+      }
+    };
+    
+    syncWishlist();
+  }, [wishlist.length]); // Only depend on length to avoid infinite loops
 
   // ✅ Remove item from backend and update currWishlist
   const handleRemove = async (product) => {
     try {
-      await axios.delete(`${api}/wishlist/${product.id}`, { withCredentials: true });
-      setCurrWishlist((prev) => prev.filter((item) => item.id !== product.id));
+      console.log('Removing product from wishlist:', product);
+      const response = await axios.delete(`${api}/wishlist/${product.name}`, { withCredentials: true });
+      console.log('Remove response:', response.data);
+      
+      setCurrWishlist((prev) => prev.filter((item) => item.name !== product.name));
       toast.success(`${product.name} removed from wishlist!`);
     } catch (error) {
-      console.error(error);
-      toast.error('Error removing item!');
+      console.error('Error removing item:', error);
+      toast.error(`Error removing item: ${error.response?.data?.message || error.message}`);
     }
   };
 
   // ✅ Add to cart and remove from wishlist
   const handleAddToCart = async (product) => {
     try {
-      addToCart(product);
-      await axios.delete(`${api}/wishlist/${product.id}`, { withCredentials: true });
-      setCurrWishlist((prev) => prev.filter((item) => item.id !== product.id));
+      console.log('Adding product to cart and removing from wishlist:', product);
+      
+      // First add to cart via API
+      const cartResponse = await axios.post(`${api}/wishlist-to-cart`, {
+        name: product.name,
+        quantity: product.quantity || 1,
+        price: product.price,
+        prodImage: product.prodImage
+      }, { withCredentials: true });
+      
+      console.log('Add to cart response:', cartResponse.data);
+      
+      // Then remove from wishlist
+      const wishlistResponse = await axios.delete(`${api}/wishlist/${product.name}`, { withCredentials: true });
+      console.log('Remove from wishlist response:', wishlistResponse.data);
+      
+      // Update local state
+      setCurrWishlist((prev) => prev.filter((item) => item.name !== product.name));
+      
+      // Also update context wishlist
+      removeFromWishlist(product.name);
+      
       toast.success(`${product.name} added to cart!`);
     } catch (error) {
-      console.error(error);
-      toast.error('Error adding item to cart!');
+      console.error('Error adding item to cart:', error);
+      toast.error(`Error adding item to cart: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -86,7 +132,7 @@ const Wishlist = () => {
             <div className="mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {currWishlist.map((product) => (
                 <div
-                  key={product.id}
+                  key={product.name}
                   className="bg-white rounded-lg shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition duration-300 flex flex-col"
                 >
                   <img

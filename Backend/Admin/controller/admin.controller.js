@@ -1,4 +1,4 @@
-const { connection, setupConnection } = require("../../config/database.config");
+const { pool } = require("../../config/database.config");
 const jwt = require('jsonwebtoken');
 
 
@@ -16,8 +16,7 @@ exports.loginadmin = async (req, res) => {
 
         // Query to find admin by email and password
         const query = 'SELECT * FROM admin WHERE email = ? AND password = ?';
-        const db = await setupConnection();
-        const [result] = await db.execute(query, [email, password]);
+        const [result] = await pool.execute(query, [email, password]);
         console.log("rsult of admin",[result]);
 
         // Check if admin exists in the database
@@ -77,9 +76,7 @@ exports.getAllUsers = async (req, res) => {
             ORDER BY 
                 total_orders DESC
         `;
-        const db = await setupConnection(); // Ensure you await the connection
-        console.log("Database ", db);
-        const [result] = await db.execute(query); // Execute the query
+        const [result] = await pool.execute(query); // Execute the query
 
         return res.status(200).json({
             success: true,
@@ -111,8 +108,7 @@ exports.deleteUser = async (req, res) => {
 
         // Query to delete the user
         const query = 'DELETE FROM Customer WHERE customer_id = ?';
-        const db = await setupConnection();
-        const [result] = await db.execute(query, [customer_id]);
+        const [result] = await pool.execute(query, [customer_id]);
 
         // Check if a user was deleted
         if (result.affectedRows === 0) {
@@ -173,11 +169,8 @@ exports.getAllSuppliers = async (req, res) => {
             query = query.replace("COUNT(DISTINCT inventory.product_id) AS items_listed", "0 AS items_listed");
         }
 
-        // Establish a database connection
-        const db = await setupConnection();
-
-        // Execute the query
-        const [result] = await db.execute(query);
+        // Execute the query using the pool
+        const [result] = await pool.execute(query);
 
         // Return the result as a JSON response
         return res.status(200).json({
@@ -214,8 +207,7 @@ exports.deleteSupplier = async (req, res) => {
 
         // Query to delete the supplier
         const query = 'DELETE FROM suppliers WHERE id = ?';
-        const db = await setupConnection();
-        const [result] = await db.execute(query, [supplier_id]);
+        const [result] = await pool.execute(query, [supplier_id]);
 
         // Check if a supplier was deleted
         if (result.affectedRows === 0) {
@@ -241,10 +233,8 @@ exports.deleteSupplier = async (req, res) => {
 
 async function getproductnum() {
     try {
-        const db = await setupConnection(); // Ensure you have a connection
-
         const query = 'SELECT count FROM counters WHERE name = ?';
-        const [result] = await db.execute(query, ['prodnum']); // Pass 'farmnum' as a string
+        const [result] = await pool.execute(query, ['prodnum']); // Pass 'farmnum' as a string
 
         if (result.length === 0) {
             throw new Error('Counter not found');
@@ -270,7 +260,6 @@ exports.acceptProducts = async (req, res) => {
                 message: "All fields are required",
             });
         }
-        const db = await connection;
         // Insert data into Inventory table
         const inventoryQuery = `
             INSERT INTO Inventory (product_id, supplier_id, prodImage, category_id, quantity, date_supplied, price, description) 
@@ -278,7 +267,7 @@ exports.acceptProducts = async (req, res) => {
         const prodId = await getproductnum();
         const inventoryValues = [prodId, id, prodImage, categoryname, quantity, price, description]; // Assuming supplier_id is from logged-in user (req.user)
 
-        await db.promise().query(inventoryQuery, inventoryValues);
+        await pool.execute(inventoryQuery, inventoryValues);
 
         // Insert data into Product table
         const productQuery = `
@@ -286,7 +275,7 @@ exports.acceptProducts = async (req, res) => {
             VALUES (?, ?, ?, ?, ?, NOW(), ?)`;
         const productValues = [prodId, name, description, price, quantity, prodImage];
 
-        await db.promise().query(productQuery, productValues);
+        await pool.execute(productQuery, productValues);
 
         // Return success response
         return res.status(200).json({
@@ -323,8 +312,7 @@ exports.getInventory = async (req, res) => {
             INNER JOIN suppliers ON inventory.supplier_id = suppliers.id
             INNER JOIN Category ON Category.category_id = inventory.category_id;
         `;
-        const db = await setupConnection();
-        const [rows] = await db.query(query);
+        const [rows] = await pool.query(query);
 
         // Group the products by supplier_id
         const groupedBySupplier = rows.reduce((acc, product) => {
@@ -360,7 +348,7 @@ exports.deleteInventoryItem = async (req, res) => {
     try {
         const { id } = req.params;
         const query = 'DELETE FROM inventory WHERE id = ?';
-        const [result] = await db.query(query, [id]);
+        const [result] = await pool.execute(query, [id]);
 
         if (result.affectedRows > 0) {
             res.status(200).json({ message: 'Item deleted successfully' });
@@ -379,10 +367,9 @@ exports.getItems = async (req, res) => {
     try {
         const query = 'SELECT * FROM Allfarmproducts'; // Query to get all farm products
         const query2 = 'SELECT * FROM farmproducts WHERE farmer_id = ?'; // Query to get products for a specific farmer
-        const db = await setupConnection(); // Setting up database connection
 
         // Fetch all farm products
-        const [allFarmProducts] = await db.execute(query);
+        const [allFarmProducts] = await pool.execute(query);
 
         // Check if Allfarmproducts is empty
         if (allFarmProducts.length === 0) {
@@ -402,7 +389,7 @@ exports.getItems = async (req, res) => {
 
             // If the farmer's products haven't been fetched yet, fetch them
             if (!farmerProductsMap[farmerId]) {
-                const [farmerProducts] = await db.execute(query2, [farmerId]);
+                const [farmerProducts] = await pool.execute(query2, [farmerId]);
                 farmerProductsMap[farmerId] = farmerProducts;
             }
 
@@ -450,10 +437,8 @@ exports.getItems = async (req, res) => {
 
 async function getInventoryId() {
     try {
-        const db = await setupConnection(); // Ensure you have a connection
-
         const query = 'SELECT count FROM counters WHERE name = ?';
-        const [result] = await db.execute(query, ['inventory']); // Pass 'farmnum' as a string
+        const [result] = await pool.execute(query, ['inventory']); // Pass 'farmnum' as a string
 
         if (result.length === 0) {
             throw new Error('Counter not found');
@@ -461,18 +446,17 @@ async function getInventoryId() {
 
         let num = result[0].count; // Assuming the column is 'count'
         num++;
-        await db.execute('UPDATE counters SET count = ? WHERE name = ?', [num, 'inventory']);
+        await pool.execute('UPDATE counters SET count = ? WHERE name = ?', [num, 'inventory']);
         return `INV${num}`;
     } catch (error) {
         console.log("An error occured in generating the inventory_id", error.message);
+        throw error; // Re-throw the error so it can be handled
     }
 }
 async function getproductnum() {
     try {
-        const db = await setupConnection(); // Ensure you have a connection
-
         const query = 'SELECT count FROM counters WHERE name = ?';
-        const [result] = await db.execute(query, ['prodnum']); // Pass 'farmnum' as a string
+        const [result] = await pool.execute(query, ['prodnum']); // Pass 'farmnum' as a string
 
         if (result.length === 0) {
             throw new Error('Counter not found');
@@ -480,10 +464,11 @@ async function getproductnum() {
 
         let num = result[0].count; // Assuming the column is 'count'
         num++;
-        await db.execute('UPDATE counters SET count = ? WHERE name = ?', [num, 'prodnum']);
+        await pool.execute('UPDATE counters SET count = ? WHERE name = ?', [num, 'prodnum']);
         return `PROD${num}`;
     } catch (error) {
         console.log("An error occured in generating prodnum", error.message);
+        throw error; // Re-throw the error so it can be handled
     }
 }
 
@@ -496,36 +481,34 @@ exports.approve = async (req, res) => {
             return res.status(400).json({ message: 'Farmer ID is required.' });
         }
 
-        const db = await setupConnection(); // Setting up database connection
-
         // Query to fetch all farmProduct_ids for the given farmer_id
         const fetchFarmProductsQuery = `
-            SELECT farmProducts_id FROM farmproducts WHERE farmer_id = ?;
+            SELECT id FROM farmproducts WHERE farmer_id = ? AND status = 'Pending';
         `;
-        const [farmProducts] = await db.execute(fetchFarmProductsQuery, [farmer_id]);
+        const [farmProducts] = await pool.execute(fetchFarmProductsQuery, [farmer_id]);
 
         if (farmProducts.length === 0) {
             return res.status(404).json({ message: 'No farm products found or all products are already approved.' });
         }
 
-        const farmProducts_ids = farmProducts.map(product => product.farmProducts_id);
+        const farmProducts_ids = farmProducts.map(product => product.id);
         const productDetails = [];
 
         for (const id of farmProducts_ids) {
             const updateStatusQuery = `
                 UPDATE farmproducts
                 SET status = 'approved'
-                WHERE farmProducts_id = ?;
+                WHERE id = ?;
             `;
-            const [updateResult] = await db.execute(updateStatusQuery, [id]);
+            const [updateResult] = await pool.execute(updateStatusQuery, [id]);
 
             if (updateResult.affectedRows > 0) {
                 const fetchProductQuery = `
                     SELECT product_name, description, category_id, quantity, image, price
                     FROM farmproducts
-                    WHERE farmProducts_id = ?;
+                    WHERE id = ?;
                 `;
-                const [product] = await db.execute(fetchProductQuery, [id]);
+                const [product] = await pool.execute(fetchProductQuery, [id]);
                 if (product.length > 0) {
                     productDetails.push(product[0]);
                 }
@@ -540,15 +523,33 @@ exports.approve = async (req, res) => {
 
         const inventoryItems = [];
         const productItems = [];
-        console.log("items",productDetails);
+        // console.log("items",productDetails);
 
         for (const product of productDetails) {
             const { product_name, description, category_id, quantity, image, price } = product;
 
-            const product_id = await getproductnum();
-            const inven_id = await getInventoryId();
-            console.log("hi");
+            // Validate required fields
+            if (!product_name || !category_id || !quantity || !price) {
+                console.error("Missing required fields for product:", product);
+                continue; // Skip this product
+            }
 
+            let product_id, inven_id;
+            try {
+                product_id = await getproductnum();
+                inven_id = await getInventoryId();
+            } catch (error) {
+                console.error("Error generating IDs:", error);
+                continue; // Skip this product if ID generation fails
+            }
+            
+            // Validate generated IDs
+            if (!product_id || !inven_id) {
+                console.error("Generated IDs are undefined:", { product_id, inven_id });
+                continue; // Skip this product if IDs are undefined
+            }
+            
+            // Ensure all values are defined before pushing to arrays
             productItems.push([
                 product_id,
                 product_name,
@@ -570,8 +571,13 @@ exports.approve = async (req, res) => {
                 price,
                 product_name,
                 description || "None",
-                image,
+                image || null,
             ]);
+        }
+
+        // Check if we have items to insert
+        if (productItems.length === 0) {
+            return res.status(400).json({ message: 'No valid products to approve.' });
         }
 
         const productPlaceholders = productItems.map(() => "(?, ?, ?, ?, ?, ?, ?, ?)").join(", ");
@@ -580,7 +586,9 @@ exports.approve = async (req, res) => {
             VALUES ${productPlaceholders};
         `;
         const flattenedProductItems = productItems.flat();
-        await db.execute(addToProductQuery, flattenedProductItems);
+        console.log("Product items to insert:", productItems);
+        console.log("Flattened product items:", flattenedProductItems);
+        await pool.execute(addToProductQuery, flattenedProductItems);
 
         const inventoryPlaceholders = inventoryItems.map(() => "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").join(", ");
         const addToInventoryQuery = `
@@ -588,13 +596,15 @@ exports.approve = async (req, res) => {
             VALUES ${inventoryPlaceholders};
         `;
         const flattenedInventoryItems = inventoryItems.flat();
-        await db.execute(addToInventoryQuery, flattenedInventoryItems);
+        console.log("Inventory items to insert:", inventoryItems);
+        console.log("Flattened inventory items:", flattenedInventoryItems);
+        await pool.execute(addToInventoryQuery, flattenedInventoryItems);
 
         // DELETE all records from AllfarmProducts for the given farmer
         const deleteAllFarmProductsQuery = `
             DELETE FROM AllfarmProducts WHERE farmer_id = ?;
         `;
-        await db.execute(deleteAllFarmProductsQuery, [farmer_id]);
+        await pool.execute(deleteAllFarmProductsQuery, [farmer_id]);
 
         res.status(200).json({
             message: 'Farm products approved, added to Product table, added to Inventory table, and cleared from AllfarmProducts table.'
@@ -609,7 +619,6 @@ exports.approve = async (req, res) => {
 
 exports.getrevenue = async (req, res) => {
     try {
-        const db = await setupConnection(); // Setting up database connection
 
         // Query to get the total revenue, current month total, previous month total, profit ratio, and total sum of all products
         const revenueQuery = `
@@ -650,7 +659,7 @@ exports.getrevenue = async (req, res) => {
                 SUM(total_amount) AS total_sum_of_all_products
             FROM Orders;
         `;
-        const [result] = await db.execute(revenueQuery);
+        const [result] = await pool.execute(revenueQuery);
 
         // Check if the result contains valid data
         if (result.length === 0) {
@@ -675,8 +684,7 @@ exports.getrevenue = async (req, res) => {
 exports.gettotalorders = async (req, res) => {
     try {
         const query = 'SELECT COUNT(order_id) AS totalOrders FROM Orders'; // Using COUNT instead of total to count rows
-        const db = await setupConnection(); // Setting up database connection
-        const [result] = await db.execute(query);
+        const [result] = await pool.execute(query);
 
         // Check if the result is empty
         if (result.length === 0) {
@@ -696,8 +704,7 @@ exports.gettotalorders = async (req, res) => {
 exports.gettotalproducts = async (req, res) => {
     try {
         const query = 'SELECT COUNT(product_id) AS totalProducts FROM Product'; // Counting total products
-        const db = await setupConnection(); // Setting up database connection
-        const [result] = await db.execute(query);
+        const [result] = await pool.execute(query);
 
         // Check if the result is empty
         if (result.length === 0) {
@@ -716,8 +723,7 @@ exports.gettotalproducts = async (req, res) => {
 exports.gettotalcustomers = async (req, res) => {
     try {
         const query = 'SELECT COUNT(customer_id) AS totalCustomers FROM Customer'; // Counting total customers
-        const db = await setupConnection(); // Setting up database connection
-        const [result] = await db.execute(query);
+        const [result] = await pool.execute(query);
 
         // Check if the result is empty
         if (result.length === 0) {
@@ -751,8 +757,7 @@ exports.getRecentOrders = async (req, res) => {
             LIMIT 5;
         `;
         
-        const db = await setupConnection(); // Set up database connection
-        const [result] = await db.execute(query);
+        const [result] = await pool.execute(query);
 
         // Check if no recent orders found
         if (result.length === 0) {
@@ -785,10 +790,8 @@ exports.getSalesChart = async (req, res) => {
             ORDER BY 
                 order_date ASC;
         `;
-        const db = await setupConnection();
-
         // Execute the query
-        const [results] = await db.execute(query);
+        const [results] = await pool.execute(query);
 
         // Respond with the results
         res.status(200).json(results);
@@ -818,8 +821,7 @@ exports.getAllProductCategories = async (req, res) => {
         `;
 
         // Execute the query
-        const db = await setupConnection();
-        const [results] = await db.execute(query);
+        const [results] = await pool.execute(query);
 
         // Respond with the results
         res.status(200).json(results);
