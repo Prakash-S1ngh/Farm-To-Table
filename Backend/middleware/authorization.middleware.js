@@ -1,10 +1,10 @@
 const jwt = require('jsonwebtoken');
-<<<<<<< HEAD
-const { pool } = require('../config/database.config');
-=======
+
+// const { pool } = require('../config/database.config');
+
 const {setupConnection} = require('../config/database.config');
 const { default: pool } = require('../config/test.config');
->>>>>>> 53ea080 (payment packages)
+
 require('dotenv').config();
 
 exports.authorization = async (req, res, next) => {
